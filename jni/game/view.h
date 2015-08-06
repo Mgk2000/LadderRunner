@@ -31,7 +31,13 @@ public:
     long long getCurrTime() const {return currTime;}
     int width, height;
     int getProgram() const {return program;}
+    void setDirName(const char* dir);
+    const char* getDirName() const {return (const char*) dirName;}
+    int levelsCount() const;
+    void newLevel();
+    void openLevel(int l);
 public:
+    char dirName[256];
     Constructor* constructor;
     Play* play;
     Field* field;
@@ -64,7 +70,7 @@ public:
     void processTouchPress (int x, int y);
     float aspect;
     int drawFrame();
-    void newLevel();
+    void processTouchRelease(int x, int y);
 };
 
 

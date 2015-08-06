@@ -5,8 +5,30 @@
 #include "bitmaptext.h"
 #include "roundedrectangle.h"
 #include "mutex.h"
+#include <sys/stat.h>
+#include <time.h>
 View::View() : play(0)
 {
+}
+
+void View::setDirName(const char *dir)
+{
+    strcpy(dirName, dir);
+}
+
+int View::levelsCount() const
+{
+    char buf[256];
+    for (int i = 0; i <1000000 ; i++)
+    {
+        char fn[16];
+        sprintf (fn, "/level.%d", i);
+        strcpy(buf, dirName);
+        strcat(buf, fn);
+        struct stat fstat;
+        if (stat (buf, &fstat) !=0)
+            return i;
+    }
 }
 void View::resizeGL(int w, int h)
 {
@@ -77,6 +99,14 @@ int View::drawFrame()
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     processTouches();
+#ifdef WIN32
+    currTime = 1.0* clock() / CLOCKS_PER_SEC * 1000;
+#else
+    timeval tv;
+    gettimeofday(&tv, 0);
+    currTime = tv.tv_sec * 1000 + tv.tv_usec / 1000;
+#endif
+
     field->drawFrame();
     return 0;
 }
@@ -84,6 +114,11 @@ int View::drawFrame()
 void View::newLevel()
 {
     constructor->createNewLevel();
+}
+
+void View::openLevel(int l)
+{
+    field->openLevel(l);
 }
 GLuint View::createShader(GLenum shaderType, const char *src)
 {
@@ -241,4 +276,10 @@ void View::processTouchPress(int x, int y)
     float fx,fy;
     screenToView(x,y, &fx, &fy);
     field->processTouchPress(fx, fy);
+}
+void View::processTouchRelease(int x, int y)
+{
+    float fx,fy;
+    screenToView(x,y, &fx, &fy);
+    field->processTouchRelease(fx, fy);
 }

@@ -13,6 +13,10 @@ public:
     void draw();
     virtual void processTouchMove(float x, float y);
     virtual void processTouchPress(float x, float y);
+    void resizeField(int newNCols, int newNRows);
+    virtual void drawToolbar();
+    void saveLevel();
+
 };
 
 #endif // CONSTRUCTOR_H

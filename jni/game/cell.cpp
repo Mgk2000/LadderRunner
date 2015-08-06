@@ -16,6 +16,19 @@ void Cell::setKind(Texture::Kind _kind)
     kind = (unsigned char) _kind;
 }
 
+bool Cell::free() const
+{
+    switch ((Texture::Kind) this->kind)
+    {
+    case Texture::EMPTY:
+    case Texture::GOLDEN_KEY:
+    case Texture::DOOR:
+        return true;
+    default:
+        return false;
+    }
+}
+
 
 CellDraw::CellDraw(View *_view) : DrawingObject(_view, 1, 0)
 {

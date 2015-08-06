@@ -7,6 +7,7 @@
 
 class View;
 class ARectangle;
+class Runner;
 struct ToolButton
 {
     ToolButton(Texture::Kind _kind) : kind(_kind) {}
@@ -26,14 +27,16 @@ public:
     virtual void drawFrame() = 0;
     virtual void processTouchMove(float x, float y) =0;
     virtual void processTouchPress(float x, float y) =0;
+    virtual void processTouchRelease(float x, float y){}
+    const char* dirName();
+    virtual void openLevel(int l);
+    int ncols, nrows;
 protected:
     Cell** cells;
-    Cell* cell(int x , int y);
+    Cell* cell(int x , int y) const;
     void drawField();
     int level;
     int nlevels;
-    int ncols, nrows;
-    void loadLevel();
     virtual void setLevel(int l);
     int runnerX, runnerY;
     View* view;
@@ -51,7 +54,14 @@ protected:
     void setToolButtonsCoords();
     void screenToField(float x, float y, int* i, int*j);
     ARectangle* rect() const;
-
+    void deleteCells();
+    BitmapText* bitmapText() const;
+    float ladderLength;
+    bool playing;
+    bool canMove(Texture::Kind _kind) const;
+    Runner * runner;
+    void fieldToScreen(float fx, float fy, float *sx, float *sy);
+    long long currTime() const;
 };
 
 
