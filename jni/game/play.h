@@ -24,6 +24,7 @@ public:
     bool canMoveRight(float x, float y) const;
     void moveStep();
     long long prevTime;
+    void adjustScreenPosition();
  };
 
 #endif // PLAY_H

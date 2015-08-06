@@ -5,10 +5,12 @@
 #include "cell.h"
 #include <fstream>
 #include "runner.h"
-Field::Field(View *_view) : view(_view), nlevels(0), cellWidth(1.0 /8),
+Field::Field(View *_view) : view(_view), nlevels(0), cellWidth(1.6667 /8),
     left(0), bottom(0), scale(1.0), cellDraw(_view), nToolColumns(1),
     currTool(Texture::EMPTY),cells(0)
 {
+    nScreenXCells = 12;
+    cellWidth = 1.6667 /nScreenXCells;
 }
 
 const char *Field::dirName()

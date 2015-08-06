@@ -27,7 +27,7 @@ void MovingObject::moveStep(float delta)
 {
     x = x + vx * delta;
     y = y + vy * delta;
-    LOGD("x=%f", x);
+//    LOGD("x=%f", x);
     if (x<0)
     {
         x=0;

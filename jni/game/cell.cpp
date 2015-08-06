@@ -58,8 +58,8 @@ void CellDraw::initGL()
     Point4D* vertices4 = new Point4D[6];
     vertices4[0] = Point4D (0 , 0, 0.5 , 0.5);
     vertices4[1] = Point4D(-r, r, 0,1);
-    vertices4[2] = Point4D(-r, -r, 0,0);
-    vertices4[3] = Point4D(r, -r, 1,0);
+    vertices4[2] = Point4D(-r, -r, 0,0.003);
+    vertices4[3] = Point4D(r, -r, 1,0.003);
     vertices4[4] = Point4D(r, r, 1,1);
     vertices4[5] = vertices4[1];
     glBindBuffer(GL_ARRAY_BUFFER, vboIds[0]);

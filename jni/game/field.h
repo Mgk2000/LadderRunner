@@ -62,6 +62,7 @@ protected:
     Runner * runner;
     void fieldToScreen(float fx, float fy, float *sx, float *sy);
     long long currTime() const;
+    int nScreenXCells;
 };
 
 

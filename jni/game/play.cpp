@@ -10,6 +10,7 @@ void Play::drawFrame()
 {
 
     moveStep();
+    adjustScreenPosition();
     draw();
 }
 
@@ -119,6 +120,12 @@ void Play::moveStep()
     if (delta>0.1)
         return;
     runner->moveStep(delta);
+}
+
+void Play::adjustScreenPosition()
+{
+    if (runner->x > nScreenXCells*0.5 && runner->x < ncols - nScreenXCells*0.5)
+        left = (runner->x - nScreenXCells*0.5)*0.25;
 }
 
 bool Play::hasSurface(int x, int y) const
