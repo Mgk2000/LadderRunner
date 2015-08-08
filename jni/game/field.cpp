@@ -6,6 +6,7 @@
 #include <fstream>
 #include "runner.h"
 #include "math_helper.h"
+#include "play.h"
 Field::Field(View *_view) : view(_view), nlevels(0), cellWidth(1.6667 /8),
     left(0), bottom(0), scale(1.0), cellDraw(_view), nToolColumns(1),
     currTool(Texture::EMPTY),cells(0)
@@ -54,7 +55,7 @@ void Field::openLevel(int l)
                     switch (kind)
                     {
                     case Texture::RUNNER:
-                        runner = new Runner(this);
+                        runner = new Runner((Play*)this);
                         mo = runner;
                         break;
                     default:
@@ -72,6 +73,50 @@ void Field::openLevel(int l)
         delete[] levelbuf;
     }
     f.close();
+    ladderLength = 5;
+    ladderLength2 = sqr(ladderLength);
+}
+
+void Field::openLevel(int l, const char *levelbuf)
+{
+    level = l;
+    unsigned short nc, nr;
+    memcpy (&nc, (void*)levelbuf, 2);
+    memcpy (&nr, (void*)&levelbuf[2], 2);
+    ncols = nc;
+    nrows = nr;
+    cells = new Cell*[ncols * nrows];
+    int dataOffset = 4;
+    for (int i=0; i< nrows; i++)
+        for (int j = 0; j< ncols; j++)
+        {
+            Texture::Kind kind = (Texture::Kind)levelbuf[dataOffset + j+ i* ncols];
+            if (!playing || !canMove(kind))
+                cells[j+ i* ncols] = new Cell(kind);
+            else
+            {
+                cells[j+ i* ncols] = new Cell();
+                MovingObject* mo = 0;
+                switch (kind)
+                {
+                case Texture::RUNNER:
+                    runner = new Runner((Play*)this);
+                    mo = runner;
+                    break;
+                default:
+                    break;
+                }
+                if (mo)
+                {
+//                    mo->setX(j * cellWidth);
+//                    mo->setY(i * cellWidth);
+                    mo->setX(j);
+                    mo->setY(i);
+                    mo->setVX(0);
+                    mo->setVY(0);
+                }
+            }
+        }
     ladderLength = 5;
     ladderLength2 = sqr(ladderLength);
 }

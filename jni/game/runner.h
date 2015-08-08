@@ -4,7 +4,14 @@
 class Runner : public MovingObject
 {
 public:
-    Runner(Field* _field);
+    Runner(Play* _field);
+    float climbX, climbY;
+    void climb(int _x, int _y);
+    void checkClimb();
+    virtual bool busy() const;
+    virtual void  moveStep(float delta);
+    bool climbing;
+
 };
 
 #endif // RUNNER_H

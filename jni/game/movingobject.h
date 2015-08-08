@@ -1,11 +1,11 @@
 #ifndef MOVINGOBJECT_H
 #define MOVINGOBJECT_H
 #include "cell.h"
-class Field;
+class Play;
 class MovingObject : public Cell
 {
 public:
-    MovingObject(Field* _field, Texture::Kind _kind);
+    MovingObject(Play* _field, Texture::Kind _kind);
     virtual bool moveable() const {return true;}
 
     float x, y, v, vx, vy;
@@ -16,8 +16,16 @@ public:
     virtual void moveLeft();
     virtual void moveRight();
     virtual void stop();
-    void moveStep(float delta);
-    Field* field;
+    virtual void  moveStep(float delta);
+    Play* field;
+    bool stopping;
+    bool doStop();
+    virtual void checkStop();
+    void fall();
+    void checkFall();
+    bool falling;
+    virtual bool busy() const {return falling || stopping;}
+
 };
 
 #endif // MOVINGOBJECT_H

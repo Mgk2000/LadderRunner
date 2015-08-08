@@ -29,8 +29,9 @@ void Play::processTouchPress(float x, float y)
     screenToField(x, y, &j, &i);
     if (cell(j,i)->kind == Texture::PLACE)
     {
-        runner->setX(j);
-        runner->setY(i);
+        runner->climb(j,i);
+        //runner->setX(j);
+        //runner->setY(i);
         hideLadderHints();
         return;
     }
@@ -39,11 +40,13 @@ void Play::processTouchPress(float x, float y)
 
     if (pressedLeftMove (x,y))
     {
+        if (!runner->busy())
         if (canMoveLeft(runner->x, runner->y))
             runner->moveLeft();
     }
     else if (pressedRightMove (x,y))
     {
+        if (!runner->busy())
         if (this->canMoveRight(runner->x, runner->y))
             runner->moveRight();
     }
@@ -130,7 +133,7 @@ bool Play::canMoveLeft(float x, float y) const
     int xx = x ;
     int yy = y;
     float dx = x - xx;
-    if (dx> 0.5)
+    if (dx> 0.1)
         return true;
     return leftFree(xx, yy);
 }
@@ -153,14 +156,28 @@ void Play::moveStep()
         return;
 //    if (runner->vx ==0 && runner->vy == 0)
 //        return;
-    int xxx = runner->x;
+///    int xxx = runner->x;
+    if (runner->falling)
+        runner->checkFall();
+    if (runner->climbing)
+        runner->checkClimb();
+    LOGD("vx=%f delta=%f", runner->vx, delta );
     if (!runnerCanMove())
+    {
+        LOGD("runner->stop()");
         runner->stop();
-    else
+    }
+    //else
+    {
+        LOGD("runner->moveStep");
         runner->moveStep(delta);
+        LOGD("after movestep x=%f vx=%f", runner->x, runner->vx);
+    }
     int xx = runner->x;
     //if (runner->vx<0 && xx>0)
     //    xx--;
+    bool bbb = !runner->climbing;
+    if (!runner->climbing)
     if (!hasSurface(xx,runner->y))
     {
         runner->x =xx;
@@ -358,14 +375,15 @@ void Play::hideLadderHints()
 
 void Play::runnerFall()
 {
-    for(int i = runner->y-1; i>=0; i--)
+    runner->fall();
+/*    for(int i = runner->y-1; i>=0; i--)
     {
         if (hasSurface(runner->x, i))
         {
             runner->y = i;
             return;
         }
-    }
+    }*/
 }
 
 bool Play::runnerCanMove()

@@ -30,6 +30,7 @@ public:
     virtual void processTouchRelease(float x, float y){}
     const char* dirName();
     virtual void openLevel(int l);
+    void openLevel(int l, const char* buf);
     int ncols, nrows;
 protected:
     Cell** cells;

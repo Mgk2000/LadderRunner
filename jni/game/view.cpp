@@ -120,6 +120,11 @@ void View::openLevel(int l)
 {
     field->openLevel(l);
 }
+
+void View::openLevel(int l, char *fn)
+{
+    field->openLevel(l, fn);
+}
 GLuint View::createShader(GLenum shaderType, const char *src)
 {
     GLuint shader = glCreateShader(shaderType);
@@ -258,6 +263,9 @@ void View::processTouches()
                 break;
             case TouchPointMoved:
                 processTouchMove(te.x, te.y);
+                break;
+            case TouchPointReleased:
+                processTouchRelease(te.x, te.y);
                 break;
             default: break;
             }

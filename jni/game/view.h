@@ -14,6 +14,7 @@ class ARectangle;
 enum TouchPointState {
     TouchPointPressed    = 0x01,
     TouchPointMoved      = 0x02,
+    TouchPointReleased   = 0x08
 };
 struct TouchEvent
 {
@@ -36,6 +37,7 @@ public:
     int levelsCount() const;
     void newLevel();
     void openLevel(int l);
+    void openLevel(int l, char* fn);
 public:
     char dirName[256];
     Constructor* constructor;
