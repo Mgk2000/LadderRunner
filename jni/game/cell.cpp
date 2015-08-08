@@ -1,19 +1,26 @@
 #include "cell.h"
 #include "view.h"
 
-Cell::Cell() : kind((unsigned char)Texture::EMPTY)
+Cell::Cell() : kind((unsigned char)Texture::EMPTY) , saveKind(Texture::EMPTY)
 {
 
 }
 
 Cell::Cell(Texture::Kind _kind) :
-     kind((unsigned char)_kind)
+     kind((unsigned char)_kind), saveKind(Texture::EMPTY)
 {
 }
 
-void Cell::setKind(Texture::Kind _kind)
+void Cell::setKind(Texture::Kind _kind, bool save)
 {
+    if (save)
+        saveKind = kind;
     kind = (unsigned char) _kind;
+}
+
+void Cell::restoreKind()
+{
+    kind = saveKind;
 }
 
 bool Cell::free() const
@@ -23,6 +30,8 @@ bool Cell::free() const
     case Texture::EMPTY:
     case Texture::GOLDEN_KEY:
     case Texture::DOOR:
+    case Texture::BOMB:
+    case Texture::PLACE:
         return true;
     default:
         return false;

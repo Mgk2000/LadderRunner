@@ -39,6 +39,8 @@ public:
         DECREASE_VERT,
         SAVE,
         LADDER,
+        PLACE,
+        BOMB,
         ABC
     };
     Texture(int w, int h, const char* data, Kind kind, bool transparentWhite);

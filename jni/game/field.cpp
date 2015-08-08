@@ -5,12 +5,14 @@
 #include "cell.h"
 #include <fstream>
 #include "runner.h"
+#include "math_helper.h"
 Field::Field(View *_view) : view(_view), nlevels(0), cellWidth(1.6667 /8),
     left(0), bottom(0), scale(1.0), cellDraw(_view), nToolColumns(1),
     currTool(Texture::EMPTY),cells(0)
 {
-    nScreenXCells = 12;
+    nScreenXCells = 16;
     cellWidth = 1.6667 /nScreenXCells;
+    toolButtonSwitch = false;
 }
 
 const char *Field::dirName()
@@ -70,7 +72,8 @@ void Field::openLevel(int l)
         delete[] levelbuf;
     }
     f.close();
-    ladderLength = 25;
+    ladderLength = 5;
+    ladderLength2 = sqr(ladderLength);
 }
 
 Cell *Field::cell(int x, int y) const
@@ -92,12 +95,30 @@ void Field::drawField()
     if (l < 0) l = 0;
     if (t >=nrows) t = nrows-1;
     if (r >= ncols ) r = ncols-1;
+    t = nrows-1;
+    r = ncols-1;
     for (int i = b; i<= t; i++)
         for (int j = l; j <= r; j++)
         {
+            float sc = 1.0;
+            float dy  = 0.0;
+            switch (cell(j,i)->kind)
+            {
+            case Texture::GOLDEN_KEY:
+                sc = 0.3;
+                dy = -cellWidth*0.7;
+                break;
+            case Texture::BOMB:
+                sc = 0.3;
+                dy = -cellWidth*0.6;
+                break;
+            default:
+                break;
+            }
+
             float xx = (cellWidth*j*2 - left) * scale -1.6667 + cellWidth*scale ;
             float yy = (cellWidth*i*2 - bottom) * scale -1 + cellWidth*scale;
-            cellDraw.draw(cell(j,i), xx, yy, cellWidth*scale);
+            cellDraw.draw(cell(j,i), xx, yy + dy * scale, cellWidth * scale * sc);
             //cell(j, i)->draw(xx, yy, scale);
         }
 
@@ -110,6 +131,7 @@ void Field::setLevel(int l)
 
 void Field::drawToolbar()
 {
+    checkToolButtonSwitch();
    for (int i=0; i< tools.size(); i++)
    {
        if (currTool == tools[i]->kind)
@@ -159,6 +181,23 @@ void Field::fieldToScreen(float fx, float fy, float* sx, float* sy)
 long long Field::currTime() const
 {
     return view->getCurrTime();
+}
+
+void Field::switchToolButton(Texture::Kind tool)
+{
+    toolButtonSwitch = true;
+    currTool = tool;
+    toolButtonSwitchTime = currTime() + 500;
+}
+
+void Field::checkToolButtonSwitch()
+{
+    if (!toolButtonSwitch)
+        return;
+    if (currTime() < toolButtonSwitchTime)
+        return;
+    currTool = Texture::EMPTY;
+    toolButtonSwitch = false;
 }
 ARectangle *Field::rect() const
 {

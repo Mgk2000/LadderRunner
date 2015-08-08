@@ -8,7 +8,9 @@ struct Cell
     Cell();
     Cell(Texture::Kind _kind);
     unsigned char kind;
-    void setKind(Texture::Kind _kind);
+    unsigned char saveKind;
+    void setKind(Texture::Kind _kind, bool save = false);
+    void restoreKind();
     bool free() const;
 };
 class CellDraw : public DrawingObject

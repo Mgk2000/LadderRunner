@@ -56,13 +56,17 @@ protected:
     ARectangle* rect() const;
     void deleteCells();
     BitmapText* bitmapText() const;
-    float ladderLength;
+    float ladderLength, ladderLength2;
     bool playing;
     bool canMove(Texture::Kind _kind) const;
     Runner * runner;
     void fieldToScreen(float fx, float fy, float *sx, float *sy);
     long long currTime() const;
     int nScreenXCells;
+    bool toolButtonSwitch;
+    long long toolButtonSwitchTime;
+    void checkToolButtonSwitch();
+    void switchToolButton(Texture::Kind tool);
 };
 
 

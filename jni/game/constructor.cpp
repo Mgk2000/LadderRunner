@@ -79,6 +79,7 @@ void Constructor::fillTools()
     tools.push_back(new ToolButton(Texture::BIG_BRICK));
     tools.push_back(new ToolButton(Texture::BIG_SOLID_BRICK));
     tools.push_back(new ToolButton(Texture::BIG_SOFT_BRICK));
+    tools.push_back(new ToolButton(Texture::BOMB));
     tools.push_back(new ToolButton(Texture::GOLDEN_KEY));
     tools.push_back(new ToolButton(Texture::DOOR));
 //    tools.push_back(new ToolButton(Texture::MOVE));
@@ -103,6 +104,7 @@ void Constructor::processTouchMove(float x, float y)
 {
     left = left - (x-lastX) / scale;
     bottom = bottom - (y-lastY) / scale;
+    LOGD("left=%f scale=%f", left, scale);
     lastX = x;
     lastY = y;
 }
@@ -150,10 +152,12 @@ void Constructor::processTouchPress(float x, float y)
                        newnrows--;
                    }
                    resizeField(newncols, newnrows);
+                   switchToolButton (tool);
                    break;
                }
                case Texture::SAVE:
                    saveLevel();
+                   switchToolButton (tool);
                    break;
                default:
                    currTool = tool;

@@ -19,8 +19,17 @@ void MovingObject::moveRight()
 
 void MovingObject::stop()
 {
+    bool right  = vx >0;
     vx = 0;
     vy =0;
+
+    int ix = x;
+    if (!right)
+        x = ix;
+    else
+        x = ix+1;
+    if (x > field->ncols-1)
+        x = field->ncols-1;
 }
 
 void MovingObject::moveStep(float delta)
