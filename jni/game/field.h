@@ -71,6 +71,7 @@ public:
     int nLevelKeys;
     bool canMoveTo(int x, int y) const;
     int nLevelBombs, nRunnerBombs;
+    virtual void clearLevel();
 };
 
 

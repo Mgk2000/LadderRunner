@@ -209,6 +209,14 @@ bool Field::canMoveTo(int x, int y) const
     return cell(x,y)->free();
 }
 
+void Field::clearLevel()
+{
+    for (int i =0; i<=nrows; i++)
+        for (int j =0; j< ncols; j++)
+            delete cells[i* ncols + j];
+    delete[] cells;
+}
+
 void Field::checkToolButtonSwitch()
 {
     if (!toolButtonSwitch)

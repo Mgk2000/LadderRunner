@@ -6,6 +6,7 @@
 #include "bomb.h"
 #include "view.h"
 #include "math_helper.h"
+#include "explosion.h"
 
 Play::Play(View *_view) : Field(_view)
 {
@@ -165,6 +166,9 @@ void Play::drawMoveables()
     std::list<Bomb*>::iterator bit = bombs.begin();
     for (; bit != bombs.end(); bit++)
         (*bit)->draw();
+    std::list<Explosion*>::iterator eit = explosions.begin();
+    for (; eit != explosions.end(); eit++)
+        (*eit)->draw();
 }
 
 bool Play::pressedRightMove(float x, float y) const
@@ -221,6 +225,17 @@ void Play::moveStep()
             doExplosion(bomb);
             delete bomb;
             bit = bombs.erase(bit);
+        }
+    }
+    std::list<Explosion*>::iterator eit = explosions.begin();
+    for (; eit != explosions.end(); eit++)
+    {
+        Explosion* expl = *eit;
+        expl->moveStep(delta);
+        if (expl->out())
+        {
+            delete expl;
+            eit = explosions.erase(eit);
         }
     }
 
@@ -471,6 +486,30 @@ void Play::doExplosion(Bomb* bomb)
                 if (cell(j,i)->breakable() &&
                         dist2(bx, by, j,i) <=explosionRadius2)
                     cell(j,i)->setKind(Texture::EMPTY);
+    Explosion * expl = new Explosion(view, this, 0.5);
+    expl->setX(bomb->ix);
+    expl->setY(bomb->iy);
+    explosions.push_back(expl);
+}
+
+void Play::clearLevel()
+{
+    if (runner)
+        delete runner;
+    if (bombs.size())
+    {
+        std::list<Bomb*>::iterator bit = bombs.begin();
+        for (; bit != bombs.end(); bit++)
+            delete *bit;
+        bombs.clear();
+    }
+    if (explosions.size())
+    {
+        std::list<Explosion*>::iterator bit = explosions.begin();
+        for (; bit != explosions.end(); bit++)
+            delete *bit;
+        explosions.clear();
+    }
 }
 
 bool Play::hasSurface(int x, int y) const

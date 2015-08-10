@@ -2,6 +2,7 @@
 #define PLAY_H
 #include "field.h"
 class Bomb;
+class Explosion;
 class Play : public Field
 {
 public:
@@ -48,6 +49,8 @@ public:
     float bombBarLeft, bombBarBottom, bombBarWidth;
     float explosionRadius, explosionRadius2;
     void doExplosion(Bomb* bomb);
+    std::list <Explosion*> explosions;
+    void clearLevel();
  };
 
 #endif // PLAY_H
