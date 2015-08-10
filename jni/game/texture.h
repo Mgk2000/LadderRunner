@@ -41,6 +41,9 @@ public:
         LADDER,
         PLACE,
         BOMB,
+        OPEN_DOOR,
+        GREEN_KEY,
+        BURNING_BOMB,
         ABC
     };
     Texture(int w, int h, const char* data, Kind kind, bool transparentWhite);

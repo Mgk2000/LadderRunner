@@ -104,7 +104,7 @@ void Constructor::processTouchMove(float x, float y)
 {
     left = left - (x-lastX) / scale;
     bottom = bottom - (y-lastY) / scale;
-    LOGD("left=%f scale=%f", left, scale);
+    //LOGD("left=%f scale=%f", left, scale);
     lastX = x;
     lastY = y;
 }
@@ -172,7 +172,7 @@ void Constructor::processTouchPress(float x, float y)
     {
         int j, i;
         screenToField(x, y, &j, &i);
-        LOGD("Pressed x=%d y=%d", j, i);
+        //LOGD("Pressed x=%d y=%d", j, i);
         if (j>=0)
         {
             switch (currTool)
@@ -226,7 +226,7 @@ void Constructor::drawToolbar()
 void Constructor::saveLevel()
 {
     char fn[16];
-    sprintf(fn, "/level.%d",level);
+    sprintf(fn, "/levels/level.%d",level);
     char buf[256];
     strcpy(buf,dirName());
     strcat(buf,fn);

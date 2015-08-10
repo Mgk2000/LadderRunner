@@ -11,6 +11,9 @@ public:
     virtual bool busy() const;
     virtual void  moveStep(float delta);
     bool climbing;
+    void catchBonus();
+    void doStop();
+    void stop();
 
 };
 

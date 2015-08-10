@@ -30,9 +30,9 @@ public:
     virtual void processTouchRelease(float x, float y){}
     const char* dirName();
     virtual void openLevel(int l);
-    void openLevel(int l, const char* buf);
+    virtual void openLevel(int l, const char* buf);
     int ncols, nrows;
-protected:
+//protected:
     Cell** cells;
     Cell* cell(int x , int y) const;
     void drawField();
@@ -68,6 +68,9 @@ protected:
     long long toolButtonSwitchTime;
     void checkToolButtonSwitch();
     void switchToolButton(Texture::Kind tool);
+    int nLevelKeys;
+    bool canMoveTo(int x, int y) const;
+    int nLevelBombs, nRunnerBombs;
 };
 
 

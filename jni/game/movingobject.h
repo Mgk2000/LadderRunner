@@ -19,12 +19,14 @@ public:
     virtual void  moveStep(float delta);
     Play* field;
     bool stopping;
-    bool doStop();
+    virtual void doStop();
     virtual void checkStop();
     void fall();
-    void checkFall();
+    bool checkFall(float delta);
     bool falling;
     virtual bool busy() const {return falling || stopping;}
+    void tryMoveLeft(float delta);
+    void tryMoveRight(float delta);
 
 };
 

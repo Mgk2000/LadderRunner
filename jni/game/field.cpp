@@ -24,9 +24,10 @@ const char *Field::dirName()
 void Field::openLevel(int l)
 {
     deleteCells();
+    nLevelKeys=0;
     level = l;
     char fn[16];
-    sprintf(fn, "/level.%d",level);
+    sprintf(fn, "/levels/level.%d",level);
     char buf[256];
     strcpy(buf,dirName());
     strcat(buf,fn);
@@ -34,47 +35,16 @@ void Field::openLevel(int l)
     std::ifstream f (buf, std::ios::in | std::ios::binary);
     if (f.is_open())
     {
-        f.read((char*) &nc, 2);
-        f.read((char*) &nr, 2);
-        ncols = nc;
-        nrows = nr;
-        int sz = ncols*nrows;
-        unsigned char* levelbuf = new unsigned char[sz];
-        f.read((char*) levelbuf, sz);
-        cells = new Cell*[ncols * nrows];
-        for (int i=0; i< nrows; i++)
-            for (int j = 0; j< ncols; j++)
-            {
-                Texture::Kind kind = (Texture::Kind)levelbuf[j+ i* ncols];
-                if (!playing || !canMove(kind))
-                    cells[j+ i* ncols] = new Cell(kind);
-                else
-                {
-                    cells[j+ i* ncols] = new Cell();
-                    MovingObject* mo = 0;
-                    switch (kind)
-                    {
-                    case Texture::RUNNER:
-                        runner = new Runner((Play*)this);
-                        mo = runner;
-                        break;
-                    default:
-                        break;
-                    }
-                    if (mo)
-                    {
-                        mo->setX(j * cellWidth);
-                        mo->setY(i * cellWidth);
-                        mo->setVX(0);
-                        mo->setVY(0);
-                    }
-                }
-            }
-        delete[] levelbuf;
+        int size = f.tellg();
+        f.seekg(0, std::ios::end);
+        size = f.tellg() - size;
+        char * buf = new char[size];
+        f.seekg(0);
+        f.read(buf, size);
+        this->openLevel(l, buf);
+        f.close();
+        delete[] buf;
     }
-    f.close();
-    ladderLength = 5;
-    ladderLength2 = sqr(ladderLength);
 }
 
 void Field::openLevel(int l, const char *levelbuf)
@@ -87,10 +57,14 @@ void Field::openLevel(int l, const char *levelbuf)
     nrows = nr;
     cells = new Cell*[ncols * nrows];
     int dataOffset = 4;
+    nLevelKeys=0;
+    nLevelBombs=0;
     for (int i=0; i< nrows; i++)
         for (int j = 0; j< ncols; j++)
         {
             Texture::Kind kind = (Texture::Kind)levelbuf[dataOffset + j+ i* ncols];
+            if (kind == Texture::GOLDEN_KEY)
+                nLevelKeys ++;
             if (!playing || !canMove(kind))
                 cells[j+ i* ncols] = new Cell(kind);
             else
@@ -104,7 +78,7 @@ void Field::openLevel(int l, const char *levelbuf)
                     mo = runner;
                     break;
                 default:
-                    break;
+                     break;
                 }
                 if (mo)
                 {
@@ -150,8 +124,8 @@ void Field::drawField()
             switch (cell(j,i)->kind)
             {
             case Texture::GOLDEN_KEY:
-                sc = 0.3;
-                dy = -cellWidth*0.7;
+                sc = 0.6;
+                dy = -cellWidth*0.2;
                 break;
             case Texture::BOMB:
                 sc = 0.3;
@@ -160,9 +134,10 @@ void Field::drawField()
             default:
                 break;
             }
+            float xx, yy;
+            xx = (cellWidth*j*2 - left) * scale -1.6667 + cellWidth*scale ;
+            yy = (cellWidth*i*2 - bottom) * scale -1 + cellWidth*scale;
 
-            float xx = (cellWidth*j*2 - left) * scale -1.6667 + cellWidth*scale ;
-            float yy = (cellWidth*i*2 - bottom) * scale -1 + cellWidth*scale;
             cellDraw.draw(cell(j,i), xx, yy + dy * scale, cellWidth * scale * sc);
             //cell(j, i)->draw(xx, yy, scale);
         }
@@ -211,15 +186,7 @@ void Field::screenToField(float x, float y, int *j, int *i)
 }
 void Field::fieldToScreen(float fx, float fy, float* sx, float* sy)
 {
-//    *j = ((x+1.66667)/scale + left) /cellWidth /2;
-//    (x+1.66667)/scale + left = *j * cellwidth * 2;
-//    (x+1.66667)/scale = *j * cellwidth * 2 - left;
-//    x+1.66667 = (*j * cellwidth * 2 - left) * scale;
-//    x = (*j * cellwidth * 2 - left) * scale - 1.6667;
     *sx = (fx * cellWidth * 2 - left + cellWidth) * scale - 1.6667;
-//    *i = ((y+1  )/scale + bottom) /cellWidth / 2;
-//    if (*j<0 || *j>=ncols || *i < 0 || *i >=  nrows)
-//        *j = -1;
     *sy = (fy * cellWidth * 2 - bottom + cellWidth) * scale - 1.0;
 }
 
@@ -233,6 +200,13 @@ void Field::switchToolButton(Texture::Kind tool)
     toolButtonSwitch = true;
     currTool = tool;
     toolButtonSwitchTime = currTime() + 500;
+}
+
+bool Field::canMoveTo(int x, int y) const
+{
+    if (x<0 || x >=ncols || y <0 || y >= nrows)
+        return false;
+    return cell(x,y)->free();
 }
 
 void Field::checkToolButtonSwitch()

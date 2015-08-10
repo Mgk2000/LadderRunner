@@ -66,20 +66,14 @@ void MovingObject::moveStep(float delta)
     }
 }
 
-bool MovingObject::doStop()
+void MovingObject::doStop()
 {
-    bool right  = vx >0;
     vx = 0;
     vy =0;
     y = round(y);
-    int ix = x;
-    if (!right)
-        x = ix;
-    else
-        x = ix+1;
-    if (x > field->ncols-1)
-        x = field->ncols-1;
+    x = round(x);
     falling = false;
+    stopping = false;
 }
 
 void MovingObject::checkStop()
@@ -96,18 +90,58 @@ void MovingObject::checkStop()
 
 void MovingObject::fall()
 {
-    vy = - 2 * v;
+    if (vx <=0)
+        x = (int) x;
+    vy = - 1.3 * v;
     vx = 0;
     falling = true;
 }
 
-void MovingObject::checkFall()
+bool MovingObject::checkFall(float delta)
 {
+    float nexty = y + vy* delta;
     int iy = y;
-    float dy = y-iy;
-    if (dy <0.2 )
-    {
-        if (field->hasSurface(x, iy))
+    int in = nexty;
+    for (int i = iy; i>=in; i--)
+        if (field->hasSurface(x, i))
+        {
+            y = i;
             doStop();
-    }
+            return true;
+        }
+    y = nexty;
+    return false;
+}
+
+void MovingObject::tryMoveLeft(float delta)
+{
+    float nextx = x + vx * delta;
+    int ix = x;
+    int iy = y;
+    int nix = nextx;
+    for (int i = ix-1; i>= nix; i--)
+        if (!field->canMoveTo(i-1, iy))
+        {
+            x = i;
+            doStop();
+            return;
+        }
+    x = nextx;
+}
+
+void MovingObject::tryMoveRight(float delta)
+{
+    float nextx = x + vx * delta;
+    int ix = x;
+    int iy = y;
+    int nix = nextx;
+    //LOGD("x=%f nix=%d", x, nix)
+    for (int i = ix+1; i<= nix; i++)
+        if (!field->canMoveTo(i+1, iy))
+        {
+            x = i;
+            doStop();
+            return;
+        }
+    x = nextx;
 }

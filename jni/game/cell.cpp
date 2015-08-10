@@ -32,6 +32,21 @@ bool Cell::free() const
     case Texture::DOOR:
     case Texture::BOMB:
     case Texture::PLACE:
+    case Texture::OPEN_DOOR:
+        return true;
+    default:
+        return false;
+    }
+}
+
+bool Cell::breakable() const
+{
+    switch ((Texture::Kind) this->kind)
+    {
+    case Texture::BRICK:
+    case Texture::BIG_BRICK:
+    case Texture::SOFT_BRICK:
+    case Texture::BIG_SOFT_BRICK:
         return true;
     default:
         return false;

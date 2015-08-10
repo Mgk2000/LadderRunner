@@ -12,6 +12,7 @@ struct Cell
     void setKind(Texture::Kind _kind, bool save = false);
     void restoreKind();
     bool free() const;
+    bool breakable() const;
 };
 class CellDraw : public DrawingObject
 {

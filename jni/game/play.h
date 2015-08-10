@@ -1,12 +1,15 @@
 #ifndef PLAY_H
 #define PLAY_H
 #include "field.h"
+class Bomb;
 class Play : public Field
 {
 public:
     Play(View* _view);
     void drawFrame();
     virtual void openLevel(int l);
+    void openLevel(int l, const char* buf);
+
     virtual void processTouchMove(float x, float y) {}
     virtual void processTouchPress(float x, float y) ;
     virtual void processTouchRelease(float x, float y);
@@ -35,8 +38,16 @@ public:
     bool canLadder(int x1, int y1, int x2, int y2) const;
     void showLadderHints();
     void hideLadderHints();
-    void runnerFall();
     bool runnerCanMove();
+    int nRunnerKeys;
+    void openDoor();
+    bool levelDone;
+    void doLevelDone();
+    void drawLevelDone();
+    std::list <Bomb*> bombs;
+    float bombBarLeft, bombBarBottom, bombBarWidth;
+    float explosionRadius, explosionRadius2;
+    void doExplosion(Bomb* bomb);
  };
 
 #endif // PLAY_H

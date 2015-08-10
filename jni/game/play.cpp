@@ -2,25 +2,52 @@
 #include "runner.h"
 #include "math.h"
 #include "logmsg.h"
+#include "bitmaptext.h"
+#include "bomb.h"
+#include "view.h"
+#include "math_helper.h"
 
 Play::Play(View *_view) : Field(_view)
 {
     playing = true;
     fillTools();
+    bombBarLeft = 1.4;
+    bombBarBottom = 0.9;
+    bombBarWidth=0.1;
+    explosionRadius = 4.0;
+    explosionRadius2 = sqr(explosionRadius);
 }
 
 void Play::drawFrame()
 {
-
-    moveStep();
-    adjustScreenPosition();
+    if (playing)
+    {
+        moveStep();
+        adjustScreenPosition();
+    }
     draw();
+    if (levelDone)
+        drawLevelDone();
+
 }
 
 void Play::openLevel(int l)
 {
     Field::openLevel(l);
     prevTime = currTime();
+    nRunnerKeys = 0;
+    nRunnerBombs = 0;
+    levelDone = false;
+    playing = true;
+}
+
+void Play::openLevel(int l, const char *buf)
+{
+    Field::openLevel(l, buf);
+    nRunnerKeys = 0;
+    nRunnerBombs = 0;
+    levelDone = false;
+    playing = true;
 }
 
 void Play::processTouchPress(float x, float y)
@@ -36,6 +63,30 @@ void Play::processTouchPress(float x, float y)
         return;
     }
     hideLadderHints();
+    if (nRunnerBombs>0 &&
+         (x>= bombBarLeft - bombBarWidth) &&
+         (x<= bombBarLeft + bombBarWidth) &&
+         (y>= bombBarBottom - bombBarWidth) &&
+         (y <= bombBarBottom + bombBarWidth))
+    {
+        Bomb* bomb = new Bomb(view, this, view->textures[Texture::BURNING_BOMB]);
+        bomb->setX(runner->x);
+        bomb->setY(runner->y);
+        bombs.push_back(bomb);
+        nRunnerBombs--;
+        return;
+    }
+
+    for (int ii = i-1; ii <= i+1; ii++)
+        for (int jj = j-1; jj <=j+1; jj++)
+            if (this->canLadder(runner->x, runner->y, jj, ii))
+            {
+                runner->climb(jj,ii);
+                //runner->setX(j);
+                //runner->setY(i);
+                hideLadderHints();
+                return;
+            }
 //    LOGD("Pressed x=%d y=%d", j, i);
 
     if (pressedLeftMove (x,y))
@@ -111,11 +162,16 @@ void Play::drawMoveables()
     float xx, yy;
     fieldToScreen(runner->x, runner->y, &xx, &yy);
     cellDraw.draw(runner, xx, yy, cellWidth*scale);
+    std::list<Bomb*>::iterator bit = bombs.begin();
+    for (; bit != bombs.end(); bit++)
+        (*bit)->draw();
 }
 
 bool Play::pressedRightMove(float x, float y) const
 {
     return x > 0 && y < 0.8;
+//    this->fi
+ //   (return x > runner->x || x>1.) && y < 0.8;
 }
 
 bool Play::pressedLeftMove(float x, float y) const
@@ -154,35 +210,20 @@ void Play::moveStep()
     prevTime = currTime();
     if (delta>0.1)
         return;
-//    if (runner->vx ==0 && runner->vy == 0)
-//        return;
-///    int xxx = runner->x;
-    if (runner->falling)
-        runner->checkFall();
-    if (runner->climbing)
-        runner->checkClimb();
-    LOGD("vx=%f delta=%f", runner->vx, delta );
-    if (!runnerCanMove())
+    runner->moveStep(delta);
+    std::list<Bomb*>::iterator bit = bombs.begin();
+    for (; bit != bombs.end(); bit++)
     {
-        LOGD("runner->stop()");
-        runner->stop();
+        Bomb* bomb = *bit;
+        bomb->moveStep(delta);
+        if (bomb->out())
+        {
+            doExplosion(bomb);
+            delete bomb;
+            bit = bombs.erase(bit);
+        }
     }
-    //else
-    {
-        LOGD("runner->moveStep");
-        runner->moveStep(delta);
-        LOGD("after movestep x=%f vx=%f", runner->x, runner->vx);
-    }
-    int xx = runner->x;
-    //if (runner->vx<0 && xx>0)
-    //    xx--;
-    bool bbb = !runner->climbing;
-    if (!runner->climbing)
-    if (!hasSurface(xx,runner->y))
-    {
-        runner->x =xx;
-        runnerFall();
-    }
+
 }
 
 void Play::adjustScreenPosition()
@@ -198,12 +239,20 @@ void Play::adjustScreenPosition()
     else if (runner->y > nrows - nScreenXCells*0.5 * 0.6)
         bottom = (nrows-nScreenXCells*0.6) * 2 * cellWidth;
     else
-        bottom = (runner->y - nScreenXCells*0.5*0.6) * 2 * cellWidth;
+        bottom = (runner->y - nScreenXCells*0.5*0.4) * 2 * cellWidth;
 }
 
 void Play::drawToolbar()
 {
-    Field::drawToolbar();
+    //Field::drawToolbar();
+    if (nRunnerBombs >0)
+    {
+        cellDraw.draw(Texture::BOMB,  bombBarLeft, bombBarBottom, 1.0/8);
+        char buf[8];
+        sprintf (buf, "%d", nRunnerBombs);
+        bitmapText()->draw(bombBarLeft+0.15, bombBarBottom-0.05, 0.1, COLOR_YELLOW, buf);
+    }
+
 }
 
 void Play::fillTools()
@@ -238,6 +287,8 @@ float Play::cellDistance(int x1, int y1, int x2, int y2) const
 
 bool Play::canLadder(int x1, int y1, int x2, int y2) const
 {
+    if (x2<0 || x2 >= ncols || y2 <0 || y2 >=nrows)
+        return false;
     if (x1 == x2)
         return false;
     if (x1-x2 > ladderLength || x2-x1 > ladderLength || y1-y2 > ladderLength || y2-y1 > ladderLength)
@@ -373,19 +424,6 @@ void Play::hideLadderHints()
                 cell(j,i)->restoreKind();
 }
 
-void Play::runnerFall()
-{
-    runner->fall();
-/*    for(int i = runner->y-1; i>=0; i--)
-    {
-        if (hasSurface(runner->x, i))
-        {
-            runner->y = i;
-            return;
-        }
-    }*/
-}
-
 bool Play::runnerCanMove()
 {
     if (runner->vx < 0)
@@ -399,6 +437,40 @@ bool Play::runnerCanMove()
         return false;
     }
     return true;
+}
+
+void Play::openDoor()
+{
+    for (int i =0; i< nrows; i++)
+        for (int j = 0; j< ncols; j++)
+        {
+            if (cell(j,i)->kind == Texture::DOOR)
+                cell(j,i)->setKind(Texture::OPEN_DOOR);
+        }
+}
+
+void Play::doLevelDone()
+{
+    playing = false;
+    levelDone = true;
+}
+
+void Play::drawLevelDone()
+{
+    this->bitmapText()->drawCenter(0,0, 0.1, COLOR_YELLOW, "Level done!");
+
+}
+
+void Play::doExplosion(Bomb* bomb)
+{
+    float bx = bomb->ix;
+    float by = bomb->iy;
+    for (int i = by - explosionRadius; i< by + explosionRadius; i++ )
+        for (int j = bx - explosionRadius; j< bx + explosionRadius; j++ )
+            if (i>=0 && i<nrows && j >=0 && j<ncols)
+                if (cell(j,i)->breakable() &&
+                        dist2(bx, by, j,i) <=explosionRadius2)
+                    cell(j,i)->setKind(Texture::EMPTY);
 }
 
 bool Play::hasSurface(int x, int y) const

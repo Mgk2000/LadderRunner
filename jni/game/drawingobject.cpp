@@ -194,7 +194,7 @@ void DrawingObject::drawTexture(float angle)
     err = glGetError();
     if (err)
         LOGD("err=%d", err);
-    _colorMult.alpha = 0.5;
+   // _colorMult.alpha = 0.5;
     glUniform4fv(texture->colorMultLocation(), 1,
                        (const GLfloat*) &_colorMult);
     err = glGetError();
