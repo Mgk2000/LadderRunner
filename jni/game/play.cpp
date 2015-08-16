@@ -10,7 +10,7 @@
 #include "rectangle.h"
 #include "block.h"
 
-Play::Play(View *_view) : Field(_view)
+Play::Play(View *_view) : Field(_view), ladder(_view, this)
 {
    // playing = true;
     fillTools();
@@ -162,6 +162,8 @@ void Play::drawMoveables()
     float xx, yy;
     fieldToScreen(runner->x, runner->y, &xx, &yy);
     //cellDraw.draw(runner, xx, yy, cellWidth*scale);
+    if (runner->climbing)
+        ladder.draw();
     runnerDraw.draw(xx, yy, cellWidth*scale);
     std::list<Bomb*>::iterator bit = bombs.begin();
     for (; bit != bombs.end(); bit++)
@@ -265,7 +267,7 @@ void Play::adjustScreenPosition()
 
 void Play::drawToolbar()
 {
-    rect()->draw(toolbarLeft, toolbarBottom, toolbarRight, toolbarTop, COLOR_LIGHTGRAY);
+    rect()->draw(toolbarLeft, toolbarBottom, toolbarRight, toolbarTop, Point4D(0.75, 0.75, 0.75, 0.3));
     Field::drawToolbar();
     if (nRunnerBombs >0)
     {
@@ -280,6 +282,7 @@ void Play::drawToolbar()
 void Play::fillTools()
 {
     tools.push_back(new ToolButton(Texture::RESTART));
+    tools.push_back(new ToolButton(Texture::EMPTY));
     tools.push_back(new ToolButton(Texture::ZOOM_IN));
     tools.push_back(new ToolButton(Texture::ZOOM_OUT));
 

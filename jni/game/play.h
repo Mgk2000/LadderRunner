@@ -1,9 +1,11 @@
 #ifndef PLAY_H
 #define PLAY_H
 #include "field.h"
+#include "ladder.h"
 class Bomb;
 class Explosion;
 class Block;
+
 class Play : public Field
 {
 public:
@@ -56,6 +58,7 @@ public:
     std::list<Block*> blocks;
     bool canMoveTo(int x, int y) const;
     Block* blockOfXY(int x, int y) const;
+    Ladder ladder;
  };
 
 #endif // PLAY_H

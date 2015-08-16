@@ -126,6 +126,9 @@ void DrawingObject::drawLines(int how, uint vbo, int npoints, const Point4D& _co
     _matrix1 = view->projection1 * _matrix1;
     //	glUseProgram(view->flyingprogram().programId());
         glUseProgram(view->program);
+   if (angle !=0.0f)
+            _matrix1.rotateZ(angle * 180 / M_PI);
+
     if (_scale<0.99 ||_scale>1.1)
     {
         Mat4 scaleMatrix(_scale);
@@ -194,7 +197,7 @@ void DrawingObject::drawTexture(float angle)
     err = glGetError();
     if (err)
         LOGD("err=%d", err);
-   // _colorMult.alpha = 0.5;
+//    _colorMult.alpha = 0.5;
     glUniform4fv(texture->colorMultLocation(), 1,
                        (const GLfloat*) &_colorMult);
     err = glGetError();

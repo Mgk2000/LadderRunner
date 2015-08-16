@@ -186,7 +186,7 @@ void Field::drawToolbar()
     checkToolButtonSwitch();
    for (int i=0; i< tools.size(); i++)
    {
-       if (currTool == tools[i]->kind)
+       if (currTool == tools[i]->kind && currTool != Texture::EMPTY)
             rect()->draw(tools[i]->left(), tools[i]->bottom(), tools[i]->right(), tools[i]->top(), COLOR_BLUE);
        cellDraw.draw(tools[i]->kind,  tools[i]->x, tools[i]->y, 1.0/16);
 

@@ -24,7 +24,7 @@
 
  */
 
-static float rCoords[16][2] = {
+static float rCoords[17][2] = {
     {101, 246},
     {228,246},
     {366,246},
@@ -42,7 +42,8 @@ static float rCoords[16][2] = {
     {268, 729}, //              209-335
     {438, 729}, //
     {573, 729},
-    {706, 729}
+    {706, 729},
+    {886, 738} //dead
 };
 static float rw = 128;
 static float rh = 200;
@@ -66,16 +67,26 @@ void RunnerDraw::draw(float _x, float _y, float _scale)
         offset = 0;
     else
     {
+//        if (runner->alive)
+//        {
+//            offset = (void*) (runner->phase() * 24*4);
+//        }
+//        else
+//        {
+//            offset =  (void*) (32 * 24 * 4);
+//        }
+
         if (runner->alive)
         {
-            texture = view->textures[Texture::WALKING_RUNNER];
             offset = (void*) (runner->phase() * 24*4);
+            _colorMult = Point4D(1,1,1);
         }
         else
         {
-            texture = view->textures[Texture::DEAD_RUNNER];
-            offset = 0;
+            offset =  0;
+            _colorMult = Point4D(0,0.5,0.5);
         }
+
     }
     drawTexture();
 
@@ -83,13 +94,14 @@ void RunnerDraw::draw(float _x, float _y, float _scale)
 
 void RunnerDraw::initGL()
 {
-    Point4D* vertices4 = new Point4D[6*(16 + 16)];
+    Point4D* vertices4 = new Point4D[6*(16 + 16 + 1)];
     for (int i =0; i<16; i++)
         getVert(i, &vertices4[6*i], false);
     for (int i =0; i<16; i++)
         getVert(i, &vertices4[6*i + 96], true);
+    getVert(16, &vertices4[6*32], false);
     glBindBuffer(GL_ARRAY_BUFFER, vboIds[0]);
-    glBufferData(GL_ARRAY_BUFFER, 6*32 * sizeof(Point4D), vertices4, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, 6*33 * sizeof(Point4D), vertices4, GL_STATIC_DRAW);
     delete[] vertices4;
 }
 

@@ -43,6 +43,7 @@ void ARectangle::initGL()
 void ARectangle::draw(float x1, float y1, float x2, float y2, const Point4D &color)
 {
     setParams(x1, y1, x2, y2, color);
+//    _color.alpha = 0.3;
     drawTriangles (vboIds[1]);
 }
 

@@ -4,6 +4,7 @@
 #include "play.h"
 #include "block.h"
 #include "logmsg.h"
+#include "ladder.h"
 Runner::Runner(Play* _field) : MovingObject(_field, Texture::RUNNER),
     climbing(false), alive(true), phaseLength(40), lastLeft(false)
 {
@@ -19,6 +20,7 @@ void Runner::climb(int _x, int _y)
     vy = v * cos(fi);
     climbing = true;
     lastLeft = vx<0;
+    field->ladder.setCoords(x, y, climbX, climbY, fi);
 }
 
 void Runner::checkClimb()
