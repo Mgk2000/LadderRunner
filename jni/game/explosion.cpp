@@ -13,7 +13,7 @@ Explosion::Explosion (View* _view, Play* _field, float __radius) : DrawingObject
         vertices[i] = Point(_radius* sin(fi), _radius* cos(fi));
     }
     _color = Point4D(0.5,0,0,1);
-    _endTime = currTime() + 1500;
+    _endTime = currTime() + 750;
     initGL();
 }
 

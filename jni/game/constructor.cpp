@@ -15,9 +15,9 @@ Constructor::Constructor(View *view) : Field(view)
     fillTools();
 }
 
-void Constructor::createNewLevel()
+void Constructor::createNewLevel(int l)
 {
-    this->level = nlevels;
+    this->level = l;
     createEmptyLevel();
 }
 
@@ -79,6 +79,7 @@ void Constructor::fillTools()
     tools.push_back(new ToolButton(Texture::BIG_BRICK));
     tools.push_back(new ToolButton(Texture::BIG_SOLID_BRICK));
     tools.push_back(new ToolButton(Texture::BIG_SOFT_BRICK));
+    tools.push_back(new ToolButton(Texture::BLOCK));
     tools.push_back(new ToolButton(Texture::BOMB));
     tools.push_back(new ToolButton(Texture::GOLDEN_KEY));
     tools.push_back(new ToolButton(Texture::DOOR));
@@ -113,7 +114,7 @@ void Constructor::processTouchPress(float x, float y)
 {
     lastX = x;
     lastY = y;
-    if (toolbarPressed(x))
+    if (toolbarPressed(x, y))
     {
         currTool = Texture::EMPTY;
         for (int i =0; i< tools.size(); i++)

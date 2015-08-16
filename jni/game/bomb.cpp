@@ -9,7 +9,7 @@ Bomb::Bomb(View* _view, Play* _field, Texture* _texture) : DrawingObject (_view 
     this->setScale(0.05);
     initGL();
     beginTime = field->currTime();
-    endTime = beginTime + 5000;
+    endTime = beginTime + 3000;
 }
 
 void Bomb::draw()

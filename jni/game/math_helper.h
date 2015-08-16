@@ -11,5 +11,6 @@ inline float dist2 (float x1, float y1, float x2, float y2)
     {return sqr(x1 -x2) + sqr (y1 -y2);}
 inline float dist (float x1, float y1, float x2, float y2)
     {return sqrt(dist2(x1, y1, x2, y2));}
+bool isInsideRect (float x, float y, float left, float bottom, float right, float top);
 
 #endif // MATH_HELPER_H

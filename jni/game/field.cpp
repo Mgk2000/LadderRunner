@@ -7,13 +7,21 @@
 #include "runner.h"
 #include "math_helper.h"
 #include "play.h"
+#include "points.h"
+#include "block.h"
 Field::Field(View *_view) : view(_view), nlevels(0), cellWidth(1.6667 /8),
-    left(0), bottom(0), scale(1.0), cellDraw(_view), nToolColumns(1),
-    currTool(Texture::EMPTY),cells(0)
+    left(0), bottom(0), scale(1.0), cellDraw(_view), runnerDraw(_view), nToolColumns(1),
+    currTool(Texture::EMPTY),cells(0), saveCell(0), runner(0)
 {
     nScreenXCells = 16;
     cellWidth = 1.6667 /nScreenXCells;
     toolButtonSwitch = false;
+}
+
+Field::~Field()
+{
+    clearLevel();
+    delete[] saveCell;
 }
 
 const char *Field::dirName()
@@ -23,7 +31,8 @@ const char *Field::dirName()
 
 void Field::openLevel(int l)
 {
-    deleteCells();
+//    deleteCells();
+//    clearLevel();
     nLevelKeys=0;
     level = l;
     char fn[16];
@@ -47,22 +56,24 @@ void Field::openLevel(int l)
     }
 }
 
-void Field::openLevel(int l, const char *levelbuf)
+void Field::openLevel(int l, const char *levelBuf)
 {
+    clearLevel();
     level = l;
     unsigned short nc, nr;
-    memcpy (&nc, (void*)levelbuf, 2);
-    memcpy (&nr, (void*)&levelbuf[2], 2);
+    memcpy (&nc, (void*)levelBuf, 2);
+    memcpy (&nr, (void*)&levelBuf[2], 2);
     ncols = nc;
     nrows = nr;
     cells = new Cell*[ncols * nrows];
     int dataOffset = 4;
     nLevelKeys=0;
     nLevelBombs=0;
+    runnerDraw.setRunner(0);
     for (int i=0; i< nrows; i++)
         for (int j = 0; j< ncols; j++)
         {
-            Texture::Kind kind = (Texture::Kind)levelbuf[dataOffset + j+ i* ncols];
+            Texture::Kind kind = (Texture::Kind)levelBuf[dataOffset + j+ i* ncols];
             if (kind == Texture::GOLDEN_KEY)
                 nLevelKeys ++;
             if (!playing || !canMove(kind))
@@ -75,8 +86,16 @@ void Field::openLevel(int l, const char *levelbuf)
                 {
                 case Texture::RUNNER:
                     runner = new Runner((Play*)this);
+                    runnerDraw.setRunner(runner);
                     mo = runner;
                     break;
+                case Texture::BLOCK:
+                {
+                    Block * block = new Block((Play*)this, Texture::BLOCK);
+                    ((Play*)this)->blocks.push_back(block);
+                    mo = block;
+                    break;
+                }
                 default:
                      break;
                 }
@@ -93,6 +112,19 @@ void Field::openLevel(int l, const char *levelbuf)
         }
     ladderLength = 5;
     ladderLength2 = sqr(ladderLength);
+    if (saveCell && saveCell != levelBuf)
+        delete[] saveCell;
+    if (!saveCell || saveCell !=levelBuf)
+    {
+        saveCell = new char[4 + ncols* nrows];
+        memcpy((void*) saveCell, (void*)levelBuf, 4+ ncols* nrows);
+    }
+}
+
+void Field::restart()
+{
+    clearLevel();
+    openLevel(level, saveCell);
 }
 
 Cell *Field::cell(int x, int y) const
@@ -202,12 +234,6 @@ void Field::switchToolButton(Texture::Kind tool)
     toolButtonSwitchTime = currTime() + 500;
 }
 
-bool Field::canMoveTo(int x, int y) const
-{
-    if (x<0 || x >=ncols || y <0 || y >= nrows)
-        return false;
-    return cell(x,y)->free();
-}
 
 void Field::clearLevel()
 {
@@ -216,6 +242,17 @@ void Field::clearLevel()
             delete cells[i* ncols + j];
     delete[] cells;
 }
+
+bool Field::insideField(float x, float y) const
+{
+    return insideField((int) x, (int) y);
+}
+
+bool Field::insideField(int x, int y) const
+{
+    return isInsideRect(x,y,0,0,ncols-1, nrows-1);
+}
+
 
 void Field::checkToolButtonSwitch()
 {
@@ -253,6 +290,7 @@ bool Field::canMove(Texture::Kind _kind) const
     switch (_kind)
     {
     case Texture::RUNNER:
+    case Texture::BLOCK:
         return true;
     default:
         return false;

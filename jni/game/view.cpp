@@ -111,9 +111,9 @@ int View::drawFrame()
     return 0;
 }
 
-void View::newLevel()
+void View::newLevel(int l)
 {
-    constructor->createNewLevel();
+    constructor->createNewLevel(l);
 }
 
 void View::openLevel(int l)

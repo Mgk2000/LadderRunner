@@ -3,6 +3,7 @@
 #include "field.h"
 class Bomb;
 class Explosion;
+class Block;
 class Play : public Field
 {
 public:
@@ -16,19 +17,18 @@ public:
     virtual void processTouchRelease(float x, float y);
     bool hasSurface(int x, int y) const;
     bool isBrick(int x, int y) const;
+    bool isBlock(int x, int y) const;
+    bool isHanging(int x, int y) const;
+
     bool isCorner(int x, int y) const;
     bool isLeftCorner(int x, int y) const;
     bool isRightCorner(int x, int y) const;
-    bool leftFree(int x, int y) const;
-    bool rightFree(int x, int y) const;
     bool levelRunning;
     void draw();
     void drawMoveables();
     bool pressedRightMove(float x, float y) const;
     bool pressedLeftMove(float x, float y) const;
     bool pressedUpMove(float x, float y) const;
-    bool canMoveLeft(float x, float y) const;
-    bool canMoveRight(float x, float y) const;
     void moveStep();
     long long prevTime;
     void adjustScreenPosition();
@@ -39,18 +39,23 @@ public:
     bool canLadder(int x1, int y1, int x2, int y2) const;
     void showLadderHints();
     void hideLadderHints();
-    bool runnerCanMove();
     int nRunnerKeys;
     void openDoor();
     bool levelDone;
     void doLevelDone();
     void drawLevelDone();
+    void  drawYouDead();
     std::list <Bomb*> bombs;
     float bombBarLeft, bombBarBottom, bombBarWidth;
+    virtual bool toolbarPressed(float x, float y) const;
+    void processToolbarPress(float x, float y);
     float explosionRadius, explosionRadius2;
-    void doExplosion(Bomb* bomb);
+    void doExplosion(float bx, float by, std::list<Bomb*>* explosedBombs);
     std::list <Explosion*> explosions;
     void clearLevel();
+    std::list<Block*> blocks;
+    bool canMoveTo(int x, int y) const;
+    Block* blockOfXY(int x, int y) const;
  };
 
 #endif // PLAY_H

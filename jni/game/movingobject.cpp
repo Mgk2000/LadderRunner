@@ -6,6 +6,8 @@
 MovingObject::MovingObject(Play* _field, Texture::Kind _kind) : Cell (_kind), field(_field), falling(false)
 {
     vy = 0;
+    vx = 0;
+    stopping = false;
 }
 
 void MovingObject::moveLeft()
@@ -119,14 +121,19 @@ void MovingObject::tryMoveLeft(float delta)
     int ix = x;
     int iy = y;
     int nix = nextx;
-    for (int i = ix-1; i>= nix; i--)
+    float dx = nextx-nix;
+    if (dx<0.2)
+    for (int i = ix; i>= nix; i--)
         if (!field->canMoveTo(i-1, iy))
         {
             x = i;
             doStop();
+            //stop();
             return;
         }
     x = nextx;
+    if (x<0)
+        x = 0;
 }
 
 void MovingObject::tryMoveRight(float delta)
@@ -138,10 +145,59 @@ void MovingObject::tryMoveRight(float delta)
     //LOGD("x=%f nix=%d", x, nix)
     for (int i = ix+1; i<= nix; i++)
         if (!field->canMoveTo(i+1, iy))
+    //int i=x;
+    //if (!canMoveRight())
         {
             x = i;
             doStop();
             return;
         }
     x = nextx;
+}
+
+bool MovingObject::canMoveLeft() const
+{
+    int xx = x ;
+    int yy = y;
+    float dx = x - xx;
+    if (dx> 0.2)
+        return true;
+    if (leftFree(xx, yy))
+        return true;
+    return false;
+
+}
+
+bool MovingObject::canMoveRight() const
+{
+    int xx = x  ;
+    int yy = y ;
+    if (rightFree(xx, yy))
+        return true;
+    return false;
+
+}
+bool MovingObject::leftFree(int x, int y) const
+{
+    if (x <=0)
+        return false;
+    if (!field->cell(x-1,y)->free())
+        return false;
+    Block * block = field->blockOfXY(x-1,y);
+    if (block &&  (MovingObject*)block != this)
+      return false;
+    return true;
+}
+
+bool MovingObject::rightFree(int x, int y) const
+{
+    if (x >= field->ncols -1)
+        return false;
+    if (!field->cell(x+1,y)->free())
+        return false;
+    Block * block = field->blockOfXY(x+1,y);
+    if (block && (MovingObject*)block != this)
+      return false;
+    return true;
+
 }

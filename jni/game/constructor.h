@@ -6,7 +6,7 @@ class Constructor : public Field
 {
 public:
     Constructor(View* view);
-    void createNewLevel();
+    void createNewLevel(int l);
     void createEmptyLevel();
     void drawFrame();
     void fillTools();

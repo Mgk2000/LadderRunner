@@ -35,7 +35,7 @@ public:
     void setDirName(const char* dir);
     const char* getDirName() const {return (const char*) dirName;}
     int levelsCount() const;
-    void newLevel();
+    void newLevel(int l);
     void openLevel(int l);
     void openLevel(int l, char* fn);
 public:

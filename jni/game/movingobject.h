@@ -25,8 +25,13 @@ public:
     bool checkFall(float delta);
     bool falling;
     virtual bool busy() const {return falling || stopping;}
-    void tryMoveLeft(float delta);
-    void tryMoveRight(float delta);
+    virtual void tryMoveLeft(float delta);
+    virtual void tryMoveRight(float delta);
+    virtual bool canMoveLeft() const;
+    virtual bool canMoveRight() const;
+    bool leftFree(int x, int y) const;
+    bool rightFree(int x, int y) const;
+
 
 };
 

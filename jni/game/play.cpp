@@ -7,10 +7,12 @@
 #include "view.h"
 #include "math_helper.h"
 #include "explosion.h"
+#include "rectangle.h"
+#include "block.h"
 
 Play::Play(View *_view) : Field(_view)
 {
-    playing = true;
+   // playing = true;
     fillTools();
     bombBarLeft = 1.4;
     bombBarBottom = 0.9;
@@ -34,16 +36,17 @@ void Play::drawFrame()
 
 void Play::openLevel(int l)
 {
+    playing = true;
     Field::openLevel(l);
     prevTime = currTime();
     nRunnerKeys = 0;
     nRunnerBombs = 0;
     levelDone = false;
-    playing = true;
 }
 
 void Play::openLevel(int l, const char *buf)
 {
+    playing = true;
     Field::openLevel(l, buf);
     nRunnerKeys = 0;
     nRunnerBombs = 0;
@@ -53,8 +56,28 @@ void Play::openLevel(int l, const char *buf)
 
 void Play::processTouchPress(float x, float y)
 {
+   if (toolbarPressed(x,y))
+   {
+       processToolbarPress(x,y);
+       return;
+   }
+   if (nRunnerBombs>0 &&
+        (x>= bombBarLeft - bombBarWidth) &&
+        (x<= bombBarLeft + bombBarWidth) &&
+        (y>= bombBarBottom - bombBarWidth) &&
+        (y <= bombBarBottom + bombBarWidth))
+   {
+       Bomb* bomb = new Bomb(view, this, view->textures[Texture::BURNING_BOMB]);
+       bomb->setX(runner->x);
+       bomb->setY(runner->y);
+       bombs.push_back(bomb);
+       nRunnerBombs--;
+       return;
+   }
     int j, i;
     screenToField(x, y, &j, &i);
+    if (!insideField(j,i))
+        return;
     if (cell(j,i)->kind == Texture::PLACE)
     {
         runner->climb(j,i);
@@ -64,19 +87,6 @@ void Play::processTouchPress(float x, float y)
         return;
     }
     hideLadderHints();
-    if (nRunnerBombs>0 &&
-         (x>= bombBarLeft - bombBarWidth) &&
-         (x<= bombBarLeft + bombBarWidth) &&
-         (y>= bombBarBottom - bombBarWidth) &&
-         (y <= bombBarBottom + bombBarWidth))
-    {
-        Bomb* bomb = new Bomb(view, this, view->textures[Texture::BURNING_BOMB]);
-        bomb->setX(runner->x);
-        bomb->setY(runner->y);
-        bombs.push_back(bomb);
-        nRunnerBombs--;
-        return;
-    }
 
     for (int ii = i-1; ii <= i+1; ii++)
         for (int jj = j-1; jj <=j+1; jj++)
@@ -93,13 +103,13 @@ void Play::processTouchPress(float x, float y)
     if (pressedLeftMove (x,y))
     {
         if (!runner->busy())
-        if (canMoveLeft(runner->x, runner->y))
+        if (runner->canMoveLeft())
             runner->moveLeft();
     }
     else if (pressedRightMove (x,y))
     {
         if (!runner->busy())
-        if (this->canMoveRight(runner->x, runner->y))
+        if (runner->canMoveRight())
             runner->moveRight();
     }
     else if (pressedUpMove (x,y))
@@ -124,32 +134,18 @@ bool Play::isCorner(int x, int y) const
 
 bool Play::isLeftCorner(int x, int y) const
 {
-    if (x<=1 || x > ncols-1 || y <=0 || y >= nrows-1)
+    if (x<=0 || x > ncols-1 || y <0 || y >= nrows-1)
         return false;
     return isBrick(x,y) && !isBrick(x-1,y) && !isBrick(x-1, y+1) && !isBrick(x, y+1);
 }
 
 bool Play::isRightCorner(int x, int y) const
 {
-    if (x < 0 || x >= ncols-1 || y <=0 || y >= nrows-1)
+    if (x < 0 || x >= ncols-1 || y <0 || y >= nrows-1)
         return false;
     return isBrick(x,y) && !isBrick(x+1,y) && !isBrick(x+1, y+1) && !isBrick(x, y+1);
 }
 
-bool Play::leftFree(int x, int y) const
-{
-    if (x <=0)
-        return false;
-    return cell(x-1,y)->free();
-}
-
-bool Play::rightFree(int x, int y) const
-{
-    if (x >= ncols -1)
-        return false;
-    return cell(x+1,y)->free();
-
-}
 
 void Play::draw()
 {
@@ -162,13 +158,23 @@ void Play::drawMoveables()
 {
     float xx, yy;
     fieldToScreen(runner->x, runner->y, &xx, &yy);
-    cellDraw.draw(runner, xx, yy, cellWidth*scale);
+    //cellDraw.draw(runner, xx, yy, cellWidth*scale);
+    runnerDraw.draw(xx, yy, cellWidth*scale);
     std::list<Bomb*>::iterator bit = bombs.begin();
     for (; bit != bombs.end(); bit++)
         (*bit)->draw();
     std::list<Explosion*>::iterator eit = explosions.begin();
     for (; eit != explosions.end(); eit++)
         (*eit)->draw();
+    std::list<Block*>::iterator it = blocks.begin();
+    for (; it != blocks.end(); it++)
+    {
+        Block* bl = *it;
+        fieldToScreen(bl->x, bl->y, &xx, &yy);
+        cellDraw.draw(bl, xx, yy ,cellWidth*scale);
+    }
+    if (!runner->alive)
+        drawYouDead();
 }
 
 bool Play::pressedRightMove(float x, float y) const
@@ -188,25 +194,6 @@ bool Play::pressedUpMove(float x, float y) const
     return y>0;
 }
 
-bool Play::canMoveLeft(float x, float y) const
-{
-    int xx = x ;
-    int yy = y;
-    float dx = x - xx;
-    if (dx> 0.1)
-        return true;
-    return leftFree(xx, yy);
-}
-
-bool Play::canMoveRight(float x, float y) const
-{
-    int xx = x  ;
-    int yy = y ;
-    float dx = x - xx ;
-    //if (dx< 0.5)
-    //    return true;
-    return rightFree(xx, yy);
-}
 
 void Play::moveStep()
 {
@@ -214,18 +201,34 @@ void Play::moveStep()
     prevTime = currTime();
     if (delta>0.1)
         return;
+    if (!runner->alive)
+    {
+        if (runner->out())
+            this->restart();
+        return;
+    }
     runner->moveStep(delta);
+    for (std::list<Block*>::iterator bit = blocks.begin(); bit != blocks.end(); bit++)
+        (*bit)->moveStep(delta);
     std::list<Bomb*>::iterator bit = bombs.begin();
+    std::list<Bomb*>explosedBombs;
     for (; bit != bombs.end(); bit++)
     {
         Bomb* bomb = *bit;
         bomb->moveStep(delta);
         if (bomb->out())
         {
-            doExplosion(bomb);
+            doExplosion(bomb->ix, bomb->iy, &explosedBombs);
             delete bomb;
             bit = bombs.erase(bit);
         }
+    }
+    if (explosedBombs.size())
+    {
+        std::list<Bomb*>::iterator bit = explosedBombs.begin();
+        for (;bit != explosedBombs.end(); bit++)
+            bombs.push_back(*bit);
+        explosedBombs.clear();
     }
     std::list<Explosion*>::iterator eit = explosions.begin();
     for (; eit != explosions.end(); eit++)
@@ -259,22 +262,24 @@ void Play::adjustScreenPosition()
 
 void Play::drawToolbar()
 {
-    //Field::drawToolbar();
+    rect()->draw(toolbarLeft, toolbarBottom, toolbarRight, toolbarTop, COLOR_LIGHTGRAY);
+    Field::drawToolbar();
     if (nRunnerBombs >0)
     {
         cellDraw.draw(Texture::BOMB,  bombBarLeft, bombBarBottom, 1.0/8);
         char buf[8];
         sprintf (buf, "%d", nRunnerBombs);
-        bitmapText()->draw(bombBarLeft+0.15, bombBarBottom-0.05, 0.1, COLOR_YELLOW, buf);
+        bitmapText()->draw(bombBarLeft+0.15, bombBarBottom-0.05, 0.07, COLOR_YELLOW, buf);
     }
 
 }
 
 void Play::fillTools()
 {
-    tools.push_back(new ToolButton(Texture::LADDER));
-    tools.push_back(new ToolButton(Texture::BOMB));
-    tools.push_back(new ToolButton(Texture::BOMB));
+    tools.push_back(new ToolButton(Texture::RESTART));
+    tools.push_back(new ToolButton(Texture::ZOOM_IN));
+    tools.push_back(new ToolButton(Texture::ZOOM_OUT));
+
     setToolButtonsCoords();
 }
 
@@ -282,15 +287,17 @@ void Play::setToolButtonsCoords()
 {
     float _scale = 0.0625;
     float dx =_scale* 2;// 0.0625;
-    float dy = 0; //_scale* 2;// 0.0625;
-    float toolbarBottom =  1.0 - cellWidth;
-    float toolbarLeft = -1.6667;
+    float dy = _scale* 1;// 0.0625;
+    toolbarBottom =  1.0 - cellWidth - dy*2;
+    toolbarLeft = -1.6667;
+    toolbarTop = 1.1;
     for (int i =0; i < tools.size(); i++)
     {
         tools[i]->x = toolbarLeft + dx + i * (dx+_scale) ;
         tools[i]->y = toolbarBottom + (dy+_scale);
         tools[i]->width = _scale * 2;
     }
+    toolbarRight = toolbarLeft + tools.size() * (dx + _scale) + dx;
 }
 
 float Play::cellDistance(int x1, int y1, int x2, int y2) const
@@ -317,14 +324,16 @@ bool Play::canLadder(int x1, int y1, int x2, int y2) const
             for (int i = x1+1; i<= x2; i++)
                 if (isBrick(i, y1))
                     return false;
-            return (isRightCorner(x1,y1-1) && isLeftCorner(x2,y2-1));
+//            return (isRightCorner(x1,y1-1) && isLeftCorner(x2,y2-1));
+            return isLeftCorner(x2,y2-1);
         }
         else
         {
             for (int i = x2; i< x1; i++)
                 if (isBrick(i, y1))
                     return false;
-            return (isRightCorner(x2,y2-1) && isLeftCorner(x1,y1-1));
+            //return (isRightCorner(x2,y2-1) && isLeftCorner(x1,y1-1));
+            return isRightCorner(x2,y2-1);// && isLeftCorner(x1,y1-1));
         }
     }
     float dy = y2 -y1;
@@ -333,7 +342,7 @@ bool Play::canLadder(int x1, int y1, int x2, int y2) const
     {
         if (x2>x1)
         {
-            if (!isLeftCorner(x2,y2-1))
+            if (!isLeftCorner(x2,y2-1) && cell(x2,y2)->kind != Texture::OPEN_DOOR)
                 return false;
             if (y2-y1 > x2-x1)
             {
@@ -361,7 +370,7 @@ bool Play::canLadder(int x1, int y1, int x2, int y2) const
                 {
                     float fyy = y1 + 1.0 * dy * (j - x1) / (x2-x1);
                     int yy = fyy;
-                    if (isBrick(j, yy) || isBrick(j-1, yy) /*|| isBrick(j-2, yy)*/)
+                    if (isBrick(j, yy) || isBrick(j-1, yy) /*|| isBlock(j-2, yy)*/)
                         return false;
                 }
                 return true;
@@ -370,7 +379,7 @@ bool Play::canLadder(int x1, int y1, int x2, int y2) const
         }
         else
         {
-            if (!isRightCorner(x2,y2-1))
+            if (!isRightCorner(x2,y2-1) && cell(x2,y2)->kind != Texture::OPEN_DOOR)
                 return false;
             if (y2-y1 > x1-x2)
             {
@@ -439,21 +448,6 @@ void Play::hideLadderHints()
                 cell(j,i)->restoreKind();
 }
 
-bool Play::runnerCanMove()
-{
-    if (runner->vx < 0)
-    {
-        if (!canMoveLeft(runner->x, runner->y))
-        return false;
-    }
-    else if (runner->vx >0)
-    {
-        if (!canMoveRight(runner->x, runner->y))
-        return false;
-    }
-    return true;
-}
-
 void Play::openDoor()
 {
     for (int i =0; i< nrows; i++)
@@ -473,35 +467,91 @@ void Play::doLevelDone()
 void Play::drawLevelDone()
 {
     this->bitmapText()->drawCenter(0,0, 0.1, COLOR_YELLOW, "Level done!");
-
 }
 
-void Play::doExplosion(Bomb* bomb)
+void Play::drawYouDead()
 {
-    float bx = bomb->ix;
-    float by = bomb->iy;
+    this->bitmapText()->drawCenter(0,0, 0.1, COLOR_RED, "You are dead...");
+}
+
+bool Play::toolbarPressed(float x, float y) const
+{
+    return isInsideRect(x, y, toolbarLeft, toolbarBottom, toolbarRight, toolbarTop );
+}
+
+void Play::processToolbarPress(float x, float y)
+{
+    currTool = Texture::EMPTY;
+    for (int i =0; i< tools.size(); i++)
+    {
+        if (tools[i]->pressed(x, y))
+        {
+           Texture::Kind tool = tools[i]->kind;
+           switch (tool)
+           {
+            case Texture::RESTART:
+               this->restart();
+               break;
+           case Texture::ZOOM_IN:
+               if (scale < 0.99)
+                 scale = scale * 2;
+               break;
+           case  Texture::ZOOM_OUT:
+               if (scale > 1/16 - 0.001)
+                 scale = scale * 0.5;
+               break;
+           default: break;
+           }
+        }
+    }
+}
+
+void Play::doExplosion(float bx, float by, std::list<Bomb*>* explosedBombs)
+{
     for (int i = by - explosionRadius; i< by + explosionRadius; i++ )
         for (int j = bx - explosionRadius; j< bx + explosionRadius; j++ )
             if (i>=0 && i<nrows && j >=0 && j<ncols)
-                if (cell(j,i)->breakable() &&
-                        dist2(bx, by, j,i) <=explosionRadius2)
-                    cell(j,i)->setKind(Texture::EMPTY);
+                if (dist2(bx, by, j,i) <=explosionRadius2)
+                {
+                    if (cell(j,i)->breakable())
+                        cell(j,i)->setKind(Texture::EMPTY);
+                    else if (cell(j,i)->kind == Texture::BOMB)
+                    {
+                        Bomb* b = new Bomb(view, this, view->textures[Texture::BOMB]);
+                        b->setX(j);
+                        b->setY(i);
+                        explosedBombs->push_back(b);
+                        cell(j,i)->setKind(Texture::EMPTY);
+                    }
+                }
     Explosion * expl = new Explosion(view, this, 0.5);
-    expl->setX(bomb->ix);
-    expl->setY(bomb->iy);
+    expl->setX(bx);
+    expl->setY(by);
     explosions.push_back(expl);
+    if (dist2(bx, by, runner->x, runner->y) <= explosionRadius2)
+        runner->die();
 }
 
 void Play::clearLevel()
 {
     if (runner)
+    {
         delete runner;
+        runner = 0;
+    }
     if (bombs.size())
     {
         std::list<Bomb*>::iterator bit = bombs.begin();
         for (; bit != bombs.end(); bit++)
             delete *bit;
         bombs.clear();
+    }
+    if (blocks.size())
+    {
+        std::list<Block*>::iterator bit = blocks.begin();
+        for (; bit != blocks.end(); bit++)
+            delete *bit;
+        blocks.clear();
     }
     if (explosions.size())
     {
@@ -518,7 +568,8 @@ bool Play::hasSurface(int x, int y) const
         return false;
     if ( y==0)
         return true;
-    if (cell(x, y-1)->free())
+//    if (cell(x, y-1)->free())
+    if (!isBrick(x,y-1))
         return false;
     return true;
 }
@@ -535,6 +586,49 @@ bool Play::isBrick(int x, int y) const
     case Texture::BIG_SOFT_BRICK:
         return true;
     default:
-        return false;
+        //return false;
+        return isBlock(x,y);
     }
+}
+
+bool Play::isBlock(int x, int y) const
+{
+    std::list<Block*>::const_iterator bit = blocks.begin();
+    for (; bit != blocks.end(); bit++)
+        if (x==(*bit)->x && (*bit)->y == y)
+            return true;
+    return false;
+}
+bool Play::isHanging(int x, int y) const
+{
+    if (y==0)
+        return false;
+    if (x>0 && isBrick(x-1,y))
+        return false;
+    if (x<ncols-1 && isBrick(x+1,y))
+        return false;
+    if (isBrick(x,y-1))
+        return false;
+    if (y < nrows-1 && isBrick(x,y+1))
+        return false;
+    return true;
+}
+bool Play::canMoveTo(int x, int y) const
+{
+    if (x<0 || x >=ncols || y <0 || y >= nrows)
+        return false;
+    //return cell(x,y)->free();
+    return !isBrick(x, y);
+}
+
+Block *Play::blockOfXY(int x, int y) const
+{
+    //LOGD ("blockOfXY x=%d, y=%d", x, y);
+    for (std::list<Block*>::const_iterator bit = blocks.begin(); bit != blocks.end(); bit++)
+    {
+        Block* block = *bit;
+        if ((int) round(block->x) == x && (int) round(block->y) == y)
+            return block;
+    }
+    return 0;
 }

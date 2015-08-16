@@ -14,7 +14,20 @@ public:
     void catchBonus();
     void doStop();
     void stop();
-
+    void die();
+    bool alive;
+    bool out() const;
+    long long endTime;
+    virtual void moveLeft();
+    virtual void moveRight();
+    virtual void tryMoveLeft(float delta);
+    virtual void tryMoveRight(float delta);
+    virtual bool canMoveLeft() const;
+    virtual bool canMoveRight() const;
+    int phase() const;
+    int phaseLength;
+    long long beginWalkTime;
+    bool lastLeft;
 };
 
 #endif // RUNNER_H

@@ -31,4 +31,7 @@ typedef Point4D Color;
 #define COLOR_CYAN Color(0.0, 0.8.0, 1.0)
 #define COLOR_MAGENTA Color(1.0, 0.0, 0.8)
 #define COLOR_BROWN Color(0.3, 0.15, 0.0)
+#define COLOR_LIGHTGRAY Color(0.75, 0.75, 0.75)
+#define COLOR_GRAY Color(0.5, 0.5, 0.5)
+
 #endif // POINTS_H

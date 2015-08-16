@@ -44,3 +44,9 @@ void rotatePoints(Point *ps, Point* pd, double angle, int np)
         rotatePoint(&ps[i], &pd[i], sina, cosa);
 }
 
+
+
+bool isInsideRect(float x, float y, float left, float bottom, float right, float top)
+{
+    return x>=left && x <=right && y>=bottom && y<=top;
+}

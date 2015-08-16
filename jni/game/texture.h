@@ -44,6 +44,10 @@ public:
         OPEN_DOOR,
         GREEN_KEY,
         BURNING_BOMB,
+        BLOCK,
+        DEAD_RUNNER,
+        RESTART,
+        WALKING_RUNNER,
         ABC
     };
     Texture(int w, int h, const char* data, Kind kind, bool transparentWhite);
