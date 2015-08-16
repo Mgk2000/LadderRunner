@@ -185,8 +185,8 @@ void Constructor::processTouchPress(float x, float y)
             {
                 for (int ii =0; ii< nrows; ii++)
                     for (int jj = 0; jj< ncols; jj++)
-                        if (cell(jj,ii)->kind == Texture::RUNNER)
-                            cell(jj,ii)->kind = Texture::EMPTY;
+                        if (cell(jj,ii)->kind() == Texture::RUNNER)
+                            cell(jj,ii)->setKind(Texture::EMPTY);
                 cell(j,i)->setKind(currTool);
                 break;
             }
@@ -207,7 +207,7 @@ void Constructor::resizeField(int newNCols, int newNRows)
         {
             Cell* newcell = new Cell;
             if (i<maxr && j< maxc)
-                newcell->setKind((Texture::Kind)cells[j+ i*ncols]->kind);
+                newcell->setKind((Texture::Kind)cells[j+ i*ncols]->kind());
             newCells[i*newNCols + j] = newcell;
         }
     deleteCells();
@@ -239,7 +239,7 @@ void Constructor::saveLevel()
     memcpy(&levelbuf[2],&nr,2);
     for (int i=0; i<nrows;i++)
         for (int j=0; j< ncols; j++)
-            levelbuf[4+ i*ncols+j] = cell(j,i)->kind;
+            levelbuf[4+ i*ncols+j] = cell(j,i)->kind();
     std::ofstream f (buf, std::ios::out | std::ios::binary);
     if (f.is_open())
         f.write((const char*) levelbuf, sz);

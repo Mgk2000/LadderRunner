@@ -65,7 +65,7 @@ void Runner::moveStep(float delta)
 
 void Runner::catchBonus()
 {
-    switch (this->field->cell(x,y)->kind)
+    switch (this->field->cell(x,y)->kind())
     {
     case Texture::GOLDEN_KEY:
         field->nRunnerKeys++;
@@ -102,7 +102,7 @@ void Runner::stop()
 
 void Runner::die()
 {
-    this->kind = Texture::DEAD_RUNNER;
+    this->setKind (Texture::DEAD_RUNNER);
     endTime = field->currTime() + 3000;
     alive = false;
 }

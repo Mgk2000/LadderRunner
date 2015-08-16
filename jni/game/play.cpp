@@ -76,37 +76,40 @@ void Play::processTouchPress(float x, float y)
    }
     int j, i;
     screenToField(x, y, &j, &i);
-    if (!insideField(j,i))
-        return;
-    if (cell(j,i)->kind == Texture::PLACE)
+    if (insideField(j,i))
     {
-        runner->climb(j,i);
-        //runner->setX(j);
-        //runner->setY(i);
+        if (cell(j,i)->kind() == Texture::PLACE)
+        {
+            runner->climb(j,i);
+            //runner->setX(j);
+            //runner->setY(i);
+            hideLadderHints();
+            return;
+        }
         hideLadderHints();
-        return;
+//        if (runner->y > 0 && isLeftCorner(runner->x, runner->y-1) && j<runner->x && i<runner->y)
+//        {
+//            runner->moveLeft();
+//            return;
+//        }
+        for (int ii = i-1; ii <= i+1; ii++)
+            for (int jj = j-1; jj <=j+1; jj++)
+                if (this->canLadder(runner->x, runner->y, jj, ii))
+                {
+                    runner->climb(jj,ii);
+                    //runner->setX(j);
+                    //runner->setY(i);
+                    return;
+                }
+    //    LOGD("Pressed x=%d y=%d", j, i);
     }
-    hideLadderHints();
-
-    for (int ii = i-1; ii <= i+1; ii++)
-        for (int jj = j-1; jj <=j+1; jj++)
-            if (this->canLadder(runner->x, runner->y, jj, ii))
-            {
-                runner->climb(jj,ii);
-                //runner->setX(j);
-                //runner->setY(i);
-                hideLadderHints();
-                return;
-            }
-//    LOGD("Pressed x=%d y=%d", j, i);
-
-    if (pressedLeftMove (x,y))
+    if (j < runner->x /*|| pressedLeftMove (x,y)*/)
     {
         if (!runner->busy())
         if (runner->canMoveLeft())
             runner->moveLeft();
     }
-    else if (pressedRightMove (x,y))
+    else if (j > runner->x /*|| pressedRightMove (x,y)*/)
     {
         if (!runner->busy())
         if (runner->canMoveRight())
@@ -246,18 +249,18 @@ void Play::moveStep()
 
 void Play::adjustScreenPosition()
 {
-    if (runner->x < nScreenXCells*0.5)
+    if (runner->x < nScreenXCells/scale*0.5)
         left = 0;
-    else if (runner->x > ncols - nScreenXCells*0.5)
-        left = (ncols-nScreenXCells) * 2 * cellWidth;
+    else if (runner->x > ncols - nScreenXCells /scale *0.5)
+        left = (ncols-nScreenXCells /scale) * 2 * cellWidth;
     else
-        left = (runner->x - nScreenXCells*0.5) * 2 * cellWidth;
-    if (runner->y < 4)
+        left = (runner->x - nScreenXCells/scale*0.5) * 2 * cellWidth;
+    if (runner->y < nScreenXCells/scale*0.5 -2)
         bottom = 0;
-    else if (runner->y > nrows - nScreenXCells*0.5 * 0.6)
-        bottom = (nrows-nScreenXCells*0.6) * 2 * cellWidth;
+    else if (runner->y > nrows - nScreenXCells/scale*0.5 * 0.6)
+        bottom = (nrows-nScreenXCells/scale*0.6) * 2 * cellWidth;
     else
-        bottom = (runner->y - nScreenXCells*0.5*0.4) * 2 * cellWidth;
+        bottom = (runner->y - nScreenXCells/scale*0.5*0.4) * 2 * cellWidth;
 }
 
 void Play::drawToolbar()
@@ -311,7 +314,7 @@ bool Play::canLadder(int x1, int y1, int x2, int y2) const
 {
     if (x2<0 || x2 >= ncols || y2 <0 || y2 >=nrows)
         return false;
-    if (x1 == x2)
+    if (x1 == x2 && cell(x2,y2)->kind() != Texture::OPEN_DOOR)
         return false;
     if (x1-x2 > ladderLength || x2-x1 > ladderLength || y1-y2 > ladderLength || y2-y1 > ladderLength)
         return false;
@@ -342,7 +345,7 @@ bool Play::canLadder(int x1, int y1, int x2, int y2) const
     {
         if (x2>x1)
         {
-            if (!isLeftCorner(x2,y2-1) && cell(x2,y2)->kind != Texture::OPEN_DOOR)
+            if (!isLeftCorner(x2,y2-1) && cell(x2,y2)->kind() != Texture::OPEN_DOOR)
                 return false;
             if (y2-y1 > x2-x1)
             {
@@ -355,6 +358,8 @@ bool Play::canLadder(int x1, int y1, int x2, int y2) const
                     if (isBrick(xx, i))
                           return false;
                     xx = fxx - 0.5;
+                    if (xx< x1)
+                        continue;
                     if (xx==x2 && i == y2-1)
                         continue;
                     if (isBrick(xx, i))
@@ -379,7 +384,7 @@ bool Play::canLadder(int x1, int y1, int x2, int y2) const
         }
         else
         {
-            if (!isRightCorner(x2,y2-1) && cell(x2,y2)->kind != Texture::OPEN_DOOR)
+            if (!isRightCorner(x2,y2-1) && cell(x2,y2)->kind() != Texture::OPEN_DOOR)
                 return false;
             if (y2-y1 > x1-x2)
             {
@@ -444,7 +449,7 @@ void Play::hideLadderHints()
 {
     for (int i = 0; i< nrows; i++)
         for (int j = 0; j < ncols; j++)
-            if (cell(j,i)->kind == Texture::PLACE)
+            if (cell(j,i)->kind() == Texture::PLACE)
                 cell(j,i)->restoreKind();
 }
 
@@ -453,7 +458,7 @@ void Play::openDoor()
     for (int i =0; i< nrows; i++)
         for (int j = 0; j< ncols; j++)
         {
-            if (cell(j,i)->kind == Texture::DOOR)
+            if (cell(j,i)->kind() == Texture::DOOR)
                 cell(j,i)->setKind(Texture::OPEN_DOOR);
         }
 }
@@ -515,7 +520,7 @@ void Play::doExplosion(float bx, float by, std::list<Bomb*>* explosedBombs)
                 {
                     if (cell(j,i)->breakable())
                         cell(j,i)->setKind(Texture::EMPTY);
-                    else if (cell(j,i)->kind == Texture::BOMB)
+                    else if (cell(j,i)->kind() == Texture::BOMB)
                     {
                         Bomb* b = new Bomb(view, this, view->textures[Texture::BOMB]);
                         b->setX(j);
@@ -576,7 +581,7 @@ bool Play::hasSurface(int x, int y) const
 
 bool Play::isBrick(int x, int y) const
 {
-    switch (cell(x,y)->kind)
+    switch (cell(x,y)->kind())
     {
     case Texture::BRICK:
     case Texture::BIG_BRICK:

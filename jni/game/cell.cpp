@@ -2,31 +2,31 @@
 #include "view.h"
 
 
-Cell::Cell() : kind((unsigned char)Texture::EMPTY) , saveKind(Texture::EMPTY)
+Cell::Cell() : _kind((unsigned char)Texture::EMPTY) , saveKind(Texture::EMPTY)
 {
 
 }
 
-Cell::Cell(Texture::Kind _kind) :
-     kind((unsigned char)_kind), saveKind(Texture::EMPTY)
+Cell::Cell(Texture::Kind __kind) :
+     _kind((unsigned char)__kind), saveKind(Texture::EMPTY)
 {
 }
 
-void Cell::setKind(Texture::Kind _kind, bool save)
+void Cell::setKind(Texture::Kind __kind, bool save)
 {
     if (save)
-        saveKind = kind;
-    kind = (unsigned char) _kind;
+        saveKind = _kind;
+    _kind = (unsigned char) __kind;
 }
 
 void Cell::restoreKind()
 {
-    kind = saveKind;
+    _kind = saveKind;
 }
 
 bool Cell::free() const
 {
-    switch ((Texture::Kind) this->kind)
+    switch ((Texture::Kind) this->kind())
     {
     case Texture::EMPTY:
     case Texture::GOLDEN_KEY:
@@ -42,7 +42,7 @@ bool Cell::free() const
 
 bool Cell::breakable() const
 {
-    switch ((Texture::Kind) this->kind)
+    switch ((Texture::Kind) this->kind())
     {
     case Texture::BRICK:
     case Texture::BIG_BRICK:
@@ -62,7 +62,7 @@ CellDraw::CellDraw(View *_view) : DrawingObject(_view, 1, 0)
 
 void CellDraw::draw(Cell *cell, float _x, float _y, float _scale)
 {
-    draw ((Texture::Kind)cell->kind, _x, _y, _scale);
+    draw ((Texture::Kind)cell->kind(), _x, _y, _scale);
 }
 
 void CellDraw::draw(Texture::Kind kind, float _x, float _y, float _scale)

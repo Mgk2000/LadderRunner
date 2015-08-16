@@ -153,7 +153,7 @@ void Field::drawField()
         {
             float sc = 1.0;
             float dy  = 0.0;
-            switch (cell(j,i)->kind)
+            switch (cell(j,i)->kind())
             {
             case Texture::GOLDEN_KEY:
                 sc = 0.6;
@@ -237,10 +237,13 @@ void Field::switchToolButton(Texture::Kind tool)
 
 void Field::clearLevel()
 {
+    if (!cells)
+        return;
     for (int i =0; i<=nrows; i++)
         for (int j =0; j< ncols; j++)
             delete cells[i* ncols + j];
     delete[] cells;
+    cells = 0;
 }
 
 bool Field::insideField(float x, float y) const

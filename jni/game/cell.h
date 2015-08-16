@@ -7,12 +7,14 @@ struct Cell
 {
     Cell();
     Cell(Texture::Kind _kind);
-    unsigned char kind;
+    virtual unsigned char kind() const {return _kind;}
     unsigned char saveKind;
     void setKind(Texture::Kind _kind, bool save = false);
     void restoreKind();
     bool free() const;
     bool breakable() const;
+protected:
+    unsigned char _kind;
 };
 class CellDraw : public DrawingObject
 {

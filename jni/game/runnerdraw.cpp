@@ -65,7 +65,18 @@ void RunnerDraw::draw(float _x, float _y, float _scale)
     if (!runner)
         offset = 0;
     else
-        offset = (void*) (runner->phase() * 24*4);
+    {
+        if (runner->alive)
+        {
+            texture = view->textures[Texture::WALKING_RUNNER];
+            offset = (void*) (runner->phase() * 24*4);
+        }
+        else
+        {
+            texture = view->textures[Texture::DEAD_RUNNER];
+            offset = 0;
+        }
+    }
     drawTexture();
 
 }
