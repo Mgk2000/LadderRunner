@@ -52,6 +52,7 @@ void Play::openLevel(int l, const char *buf)
     nRunnerBombs = 0;
     levelDone = false;
     playing = true;
+    undo.init(this);
 }
 
 void Play::processTouchPress(float x, float y)
@@ -67,6 +68,9 @@ void Play::processTouchPress(float x, float y)
         (y>= bombBarBottom - bombBarWidth) &&
         (y <= bombBarBottom + bombBarWidth))
    {
+       if (!bombs.size())
+           undo.save();
+
        Bomb* bomb = new Bomb(view, this, view->textures[Texture::BURNING_BOMB]);
        bomb->setX(runner->x);
        bomb->setY(runner->y);
@@ -265,6 +269,17 @@ void Play::adjustScreenPosition()
         bottom = (runner->y - nScreenXCells/scale*0.5*0.4) * 2 * cellWidth;
 }
 
+bool Play::toolEnabled(Texture::Kind kind) const
+{
+    switch(kind)
+    {
+    case Texture::UNDO:
+        return undo.canRestore();
+    default:
+        return Field::toolEnabled(kind);
+    }
+}
+
 void Play::drawToolbar()
 {
     rect()->draw(toolbarLeft, toolbarBottom, toolbarRight, toolbarTop, Point4D(0.75, 0.75, 0.75, 0.3));
@@ -285,6 +300,8 @@ void Play::fillTools()
     tools.push_back(new ToolButton(Texture::EMPTY));
     tools.push_back(new ToolButton(Texture::ZOOM_IN));
     tools.push_back(new ToolButton(Texture::ZOOM_OUT));
+    tools.push_back(new ToolButton(Texture::EMPTY));
+    tools.push_back(new ToolButton(Texture::UNDO));
 
     setToolButtonsCoords();
 }
@@ -507,6 +524,10 @@ void Play::processToolbarPress(float x, float y)
            case  Texture::ZOOM_OUT:
                if (scale > 1/16 - 0.001)
                  scale = scale * 0.5;
+               break;
+           case Texture::UNDO:
+               if (undo.canRestore())
+                   undo.restore();
                break;
            default: break;
            }

@@ -55,6 +55,7 @@ public:
     Texture::Kind currTool;
     int nToolColumns;
     virtual void fillTools(){}
+    virtual bool toolEnabled(Texture::Kind kind) const;
     virtual void drawToolbar();
     float toolbarLeft, toolbarBottom, toolbarTop, toolbarRight;
     virtual bool toolbarPressed(float x, float y) const {return x > toolbarLeft;}

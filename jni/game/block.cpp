@@ -24,3 +24,17 @@ void Block::moveStep(float delta)
     if (stopping)
         doStop();
 }
+
+void Block::moveLeft()
+{
+    if (abs(vx) < 0.1)
+        field->undo.save();
+    MovingObject::moveLeft();
+}
+
+void Block::moveRight()
+{
+    if (abs(vx) < 0.1)
+        field->undo.save();
+    MovingObject::moveRight();
+}

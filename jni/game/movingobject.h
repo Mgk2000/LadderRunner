@@ -9,6 +9,7 @@ public:
     virtual bool moveable() const {return true;}
 
     float x, y, v, vx, vy;
+    float saveX, saveY;
     void setX(float _x) {x=_x;}
     void setY(float _y) {y=_y;}
     void setVX(float _vx) {vx=_vx;}

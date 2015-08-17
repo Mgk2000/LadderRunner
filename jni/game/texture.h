@@ -48,6 +48,7 @@ public:
         DEAD_RUNNER,
         RESTART,
         WALKING_RUNNER,
+        UNDO,
         ABC
     };
     Texture(int w, int h, const char* data, Kind kind, bool transparentWhite);

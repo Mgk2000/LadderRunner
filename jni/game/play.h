@@ -2,6 +2,7 @@
 #define PLAY_H
 #include "field.h"
 #include "ladder.h"
+#include "undo.h"
 class Bomb;
 class Explosion;
 class Block;
@@ -34,6 +35,7 @@ public:
     void moveStep();
     long long prevTime;
     void adjustScreenPosition();
+    virtual bool toolEnabled(Texture::Kind kind) const;
     void drawToolbar();
     void fillTools();
     void setToolButtonsCoords();
@@ -59,6 +61,7 @@ public:
     bool canMoveTo(int x, int y) const;
     Block* blockOfXY(int x, int y) const;
     Ladder ladder;
+    Undo undo;
  };
 
 #endif // PLAY_H

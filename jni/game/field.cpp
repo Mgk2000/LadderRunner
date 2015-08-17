@@ -181,6 +181,24 @@ void Field::setLevel(int l)
 
 }
 
+bool Field::toolEnabled(Texture::Kind kind) const
+{
+    switch(kind)
+    {
+    case Texture::ZOOM_IN:
+        return (scale < 0.99);
+    case Texture::ZOOM_OUT:
+        return scale > 1/16 - 0.001;
+    case Texture::DECREASE_HOR:
+        return ncols>1;
+    case Texture::DECREASE_VERT:
+        return nrows>1;
+    default:
+        return true;
+    }
+
+}
+
 void Field::drawToolbar()
 {
     checkToolButtonSwitch();
@@ -188,7 +206,8 @@ void Field::drawToolbar()
    {
        if (currTool == tools[i]->kind && currTool != Texture::EMPTY)
             rect()->draw(tools[i]->left(), tools[i]->bottom(), tools[i]->right(), tools[i]->top(), COLOR_BLUE);
-       cellDraw.draw(tools[i]->kind,  tools[i]->x, tools[i]->y, 1.0/16);
+       if (toolEnabled(tools[i]->kind))
+           cellDraw.draw(tools[i]->kind,  tools[i]->x, tools[i]->y, 1.0/16);
 
    }
 }

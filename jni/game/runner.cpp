@@ -122,7 +122,6 @@ void Runner::moveLeft()
     Block* block = field->blockOfXY(x-1, y);
     if (block)
         block->moveLeft();
-
 }
 
 void Runner::moveRight()
@@ -155,7 +154,7 @@ void Runner::tryMoveLeft(float delta)
     block = field->blockOfXY(nextx,y);
     if (!block)
         goto move;
-    block->vx = vx;
+//    block->vx = vx;
     if (!block->canMoveLeft())
     {
         doStop();
@@ -190,7 +189,7 @@ void Runner::tryMoveRight(float delta)
     block = field->blockOfXY(nextx+1,y);
     if (!block)
         goto move;
-    block->vx = vx;
+//    block->vx = vx;
     if (!block->canMoveRight())
     {
         doStop();
