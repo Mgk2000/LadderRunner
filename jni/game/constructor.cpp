@@ -11,7 +11,7 @@
 Constructor::Constructor(View *view) : Field(view)
 {
     playing = false;
-   nToolColumns = 2;
+   nToolColumns = 3;
     fillTools();
 }
 
@@ -83,6 +83,9 @@ void Constructor::fillTools()
     tools.push_back(new ToolButton(Texture::BOMB));
     tools.push_back(new ToolButton(Texture::GOLDEN_KEY));
     tools.push_back(new ToolButton(Texture::DOOR));
+    tools.push_back(new ToolButton(Texture::BULLET_PROOF));
+    tools.push_back(new ToolButton(Texture::LIFT));
+
 //    tools.push_back(new ToolButton(Texture::MOVE));
     tools.push_back(new ToolButton(Texture::EXPAND_HOR));
     tools.push_back(new ToolButton(Texture::EXPAND_VERT));
@@ -173,8 +176,9 @@ void Constructor::processTouchPress(float x, float y)
     {
         int j, i;
         screenToField(x, y, &j, &i);
+        if (this->insideField(j,i))
         //LOGD("Pressed x=%d y=%d", j, i);
-        if (j>=0)
+//        if (j>=0)
         {
             switch (currTool)
             {

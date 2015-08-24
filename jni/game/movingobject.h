@@ -22,7 +22,7 @@ public:
     bool stopping;
     virtual void doStop();
     virtual void checkStop();
-    void fall();
+    virtual void fall();
     bool checkFall(float delta);
     bool falling;
     virtual bool busy() const {return falling || stopping;}

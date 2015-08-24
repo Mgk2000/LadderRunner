@@ -9,7 +9,7 @@ public:
     void moveStep(float delta);
     virtual void moveLeft();
     virtual void moveRight();
-
+    virtual void doStop();
 };
 
 #endif // BLOCK_H

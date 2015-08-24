@@ -103,6 +103,12 @@ bool MovingObject::checkFall(float delta)
 {
     float nexty = y + vy* delta;
     int iy = y;
+    if (iy<0)
+    {
+        y = 0;
+        doStop();
+        return true;
+    }
     int in = nexty;
     for (int i = iy; i>=in; i--)
         if (field->hasSurface(x, i))

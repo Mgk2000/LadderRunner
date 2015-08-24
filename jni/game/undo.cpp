@@ -5,6 +5,7 @@
 #include "bomb.h"
 #include "block.h"
 #include "logmsg.h"
+#include "growingcell.h"
 
 State::State() : cells(0)
 {
@@ -71,12 +72,13 @@ void Undo::save()
     if (this->len < size)
         len++;
     ind = (ind+1) % size;
-    LOGD("Save ind=%d", ind);
+//    LOGD("Save ind=%d", ind);
     State& st = *states[ind];
 //    st.clear();
     st.runner = Coords(field->runner->x, field->runner->y);
     st.nRunnerBombs = field->nRunnerBombs;
     st.nRunnerKeys = field->nRunnerKeys;
+    st.armored = field->runner->armored;
     for (int  i = 0; i< field->nrows; i++)
         for (int j =0; j< field->ncols; j++)
             st.cells[j+i*field->ncols] = field->cells[j+i*field->ncols]->kind();
@@ -96,13 +98,24 @@ void Undo::restore()
 {
     if (len<=0)
         return;
+    field->runner->revive();
     len--;
-    LOGD("Restore ind=%d", ind);
+//    LOGD("Restore ind=%d", ind);
     State& st = *states[ind];
 //    clearField();
     for (int i =0; i< field->nrows; i++)
         for (int j = 0; j< field->ncols; j++)
-            field->cells[j+ i* field->ncols]->setKind((Texture::Kind)st.cells[j+ i* field->ncols]);
+        {
+            int ind = j+ i* field->ncols;
+            field->cells[ind]->setKind((Texture::Kind)st.cells[ind]);
+            if (field->cells[ind]->growing())
+            {
+                GrowingCell * gcell = (GrowingCell *)field->cells[ind];
+                unsigned char k = st.cells[ind];
+                delete gcell;
+                field->cells[ind] = new Cell((Texture::Kind)k);
+            }
+        }
     std::list<Coords>::iterator cit = st.blocks.begin();
     for (std::list<Block*> ::iterator bit = field->blocks.begin(); bit != field->blocks.end(); bit++, cit++)
     {
@@ -111,8 +124,14 @@ void Undo::restore()
         block->setX(c.x);
         block->setY(c.y);
     }
+    field->runner->armored = st.armored;
+    field->clearBombs();
     field->runner->setX(st.runner.x);
     field->runner->setY(st.runner.y);
+    field->runner->setVX(0);
+    field->runner->setVY(0);
+    field->runner->climbing = false;
+
     field->nRunnerBombs = st.nRunnerBombs;
     field->nRunnerKeys = st.nRunnerKeys;
     ind = (ind+size-1) % size;

@@ -5,10 +5,12 @@
 #include "block.h"
 #include "logmsg.h"
 #include "ladder.h"
+#include "growingcell.h"
 Runner::Runner(Play* _field) : MovingObject(_field, Texture::RUNNER),
     climbing(false), alive(true), phaseLength(40), lastLeft(false)
 {
     v = 5.0;
+    postVX = 0;
 }
 
 void Runner::climb(int _x, int _y)
@@ -21,6 +23,12 @@ void Runner::climb(int _x, int _y)
     climbing = true;
     lastLeft = vx<0;
     field->ladder.setCoords(x, y, climbX, climbY, fi);
+    if (_x > x)
+        postVX = v;
+    else if (_x < x)
+        postVX = -v;
+    else
+        postVX = 0;
 }
 
 void Runner::checkClimb()
@@ -29,7 +37,12 @@ void Runner::checkClimb()
     if (dist2(x,y, climbX,climbY) < 0.04)
     {
         climbing = false;
-        doStop();
+        x = climbX;
+        y = climbY;
+        vx = postVX;
+        vy = 0;
+        if (vx ==0)
+            doStop();
     }
 }
 
@@ -40,6 +53,13 @@ bool Runner::busy() const
 
 void Runner::moveStep(float delta)
 {
+    Cell* cell = field->cell(x,y);
+    if (!climbing)
+    if (cell->growing() && ((GrowingCell*)cell)->solid())
+    {
+        this->die();
+        return;
+    }
     if (falling)
     {
         if (checkFall(delta));
@@ -82,6 +102,10 @@ void Runner::catchBonus()
     case Texture::OPEN_DOOR:
         field->doLevelDone();
         break;
+    case Texture::BULLET_PROOF:
+        armored = true;
+        field->cell(x,y)->setKind(Texture::EMPTY);
+        break;
     default:
         break;
     }
@@ -91,6 +115,7 @@ void Runner::doStop()
 {
     MovingObject::doStop();
     climbing = false;
+    vx = postVX;
 }
 
 void Runner::stop()
@@ -100,12 +125,19 @@ void Runner::stop()
     for (std::list<Block*>::iterator bit = field->blocks.begin(); bit != field->blocks.end(); bit++ )
         if (!(*bit)->falling)
             (*bit)->stop();
+    postVX = 0;
+}
+
+void Runner::revive()
+{
+    this->alive = true;
+    field->playing = true;
 }
 
 void Runner::die()
 {
-    this->setKind (Texture::DEAD_RUNNER);
-    endTime = field->currTime() + 3000;
+//    this->setKind (Texture::DEAD_RUNNER);
+    endTime = field->currTime() + 6000;
     alive = false;
 }
 
@@ -181,7 +213,7 @@ void Runner::tryMoveRight(float delta)
         doStop();
         return;
     }
-    if (!field->cell(ix+1, y)->free())
+    if (!field->cell(ix+1, round(y))->free())
     {
         doStop();
         return;
@@ -245,4 +277,10 @@ int Runner::phase() const
     if (vx>0)\
         return nph;
     else return nph + 16;
+}
+
+void Runner::fall()
+{
+    postVX = vx;
+    MovingObject::fall();
 }

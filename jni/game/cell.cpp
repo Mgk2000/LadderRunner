@@ -1,6 +1,7 @@
 #include "cell.h"
 #include "view.h"
-
+#include "logmsg.h"
+#include "growingcell.h"
 
 Cell::Cell() : _kind((unsigned char)Texture::EMPTY) , saveKind(Texture::EMPTY)
 {
@@ -34,6 +35,7 @@ bool Cell::free() const
     case Texture::BOMB:
     case Texture::PLACE:
     case Texture::OPEN_DOOR:
+    case Texture::BULLET_PROOF:
         return true;
     default:
         return false;
@@ -62,6 +64,13 @@ CellDraw::CellDraw(View *_view) : DrawingObject(_view, 1, 0)
 
 void CellDraw::draw(Cell *cell, float _x, float _y, float _scale)
 {
+    if (cell->growing())
+    {
+//       LOGD("growing");
+       this->_colorMult = Point4D(1, 1, 1, ((GrowingCell*)cell)->alpha());
+    }
+    else
+        _colorMult = Point4D(1, 1, 1, 1);
     draw ((Texture::Kind)cell->kind(), _x, _y, _scale);
 }
 

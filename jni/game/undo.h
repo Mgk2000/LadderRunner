@@ -20,6 +20,7 @@ struct State
     Coords runner;
     int nRunnerBombs, nRunnerKeys;
     void clear();
+    bool armored;
 };
 
 class Undo

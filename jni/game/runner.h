@@ -14,6 +14,7 @@ public:
     void catchBonus();
     void doStop();
     void stop();
+    void revive();
     void die();
     bool alive;
     bool out() const;
@@ -28,6 +29,10 @@ public:
     int phaseLength;
     long long beginWalkTime;
     bool lastLeft;
+    bool armored;
+    float postVX;
+    virtual void fall();
+
 };
 
 #endif // RUNNER_H

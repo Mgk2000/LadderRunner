@@ -48,6 +48,8 @@ public:
         DEAD_RUNNER,
         RESTART,
         WALKING_RUNNER,
+        BULLET_PROOF,
+        LIFT,
         UNDO,
         ABC
     };

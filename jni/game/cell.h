@@ -13,6 +13,7 @@ struct Cell
     void restoreKind();
     bool free() const;
     bool breakable() const;
+    virtual bool growing() const {return false;}
 protected:
     unsigned char _kind;
 };

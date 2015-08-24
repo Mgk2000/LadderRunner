@@ -9,6 +9,8 @@
 #include "explosion.h"
 #include "rectangle.h"
 #include "block.h"
+#include "growingcell.h"
+#include "lift.h"
 
 Play::Play(View *_view) : Field(_view), ladder(_view, this)
 {
@@ -38,6 +40,12 @@ void Play::openLevel(int l)
 {
     playing = true;
     Field::openLevel(l);
+    if (lifts.size())
+    {
+        std::list<Lift*>::iterator lit = lifts.begin();
+        for (; lit != lifts.end(); lit++)
+            (*lit)->init();
+    }
     prevTime = currTime();
     nRunnerKeys = 0;
     nRunnerBombs = 0;
@@ -48,6 +56,12 @@ void Play::openLevel(int l, const char *buf)
 {
     playing = true;
     Field::openLevel(l, buf);
+    if (lifts.size())
+    {
+        std::list<Lift*>::iterator lit = lifts.begin();
+        for (; lit != lifts.end(); lit++)
+            (*lit)->init();
+    }
     nRunnerKeys = 0;
     nRunnerBombs = 0;
     levelDone = false;
@@ -96,6 +110,7 @@ void Play::processTouchPress(float x, float y)
 //            runner->moveLeft();
 //            return;
 //        }
+        if (!runner->busy())
         for (int ii = i-1; ii <= i+1; ii++)
             for (int jj = j-1; jj <=j+1; jj++)
                 if (this->canLadder(runner->x, runner->y, jj, ii))
@@ -143,6 +158,9 @@ bool Play::isLeftCorner(int x, int y) const
 {
     if (x<=0 || x > ncols-1 || y <0 || y >= nrows-1)
         return false;
+//    Cell* cell = this->cell(x,y);
+//    if (cell->growing() && ((GrowingCell*)cell)->solid())
+//        return false;
     return isBrick(x,y) && !isBrick(x-1,y) && !isBrick(x-1, y+1) && !isBrick(x, y+1);
 }
 
@@ -150,6 +168,9 @@ bool Play::isRightCorner(int x, int y) const
 {
     if (x < 0 || x >= ncols-1 || y <0 || y >= nrows-1)
         return false;
+//    Cell* cell = this->cell(x,y);
+//    if (cell->growing() && ((GrowingCell*)cell)->solid())
+//        return false;
     return isBrick(x,y) && !isBrick(x+1,y) && !isBrick(x+1, y+1) && !isBrick(x, y+1);
 }
 
@@ -181,6 +202,13 @@ void Play::drawMoveables()
         Block* bl = *it;
         fieldToScreen(bl->x, bl->y, &xx, &yy);
         cellDraw.draw(bl, xx, yy ,cellWidth*scale);
+    }
+    std::list<Lift*>::iterator lit = lifts.begin();
+    for (; lit != lifts.end(); lit++)
+    {
+        Lift* l = *lit;
+        fieldToScreen(l->x, l->y, &xx, &yy);
+        cellDraw.draw(l, xx, yy ,cellWidth*scale);
     }
     if (!runner->alive)
         drawYouDead();
@@ -250,7 +278,8 @@ void Play::moveStep()
             eit = explosions.erase(eit);
         }
     }
-
+    for (std::list<Lift*>::iterator lit = lifts.begin(); lit != lifts.end(); lit++)
+        (*lit)->moveStep(delta);
 }
 
 void Play::adjustScreenPosition()
@@ -543,7 +572,23 @@ void Play::doExplosion(float bx, float by, std::list<Bomb*>* explosedBombs)
                 if (dist2(bx, by, j,i) <=explosionRadius2)
                 {
                     if (cell(j,i)->breakable())
-                        cell(j,i)->setKind(Texture::EMPTY);
+                    {
+                        Texture::Kind cellKind = (Texture::Kind) cell(j, i)->kind();
+                        switch (cellKind)
+                        {
+                        case Texture::BIG_BRICK:
+                        case Texture::BRICK:
+                        {
+                            int ind = j + i*ncols;
+                            delete cells[ind];
+                            cells[ind] = new GrowingCell(this);
+                            cells[ind]->setKind(cellKind);
+                            break;
+                        }
+                        default:
+                            cell(j,i)->setKind(Texture::EMPTY);
+                        }
+                    }
                     else if (cell(j,i)->kind() == Texture::BOMB)
                     {
                         Bomb* b = new Bomb(view, this, view->textures[Texture::BOMB]);
@@ -551,14 +596,27 @@ void Play::doExplosion(float bx, float by, std::list<Bomb*>* explosedBombs)
                         b->setY(i);
                         explosedBombs->push_back(b);
                         cell(j,i)->setKind(Texture::EMPTY);
+
                     }
                 }
     Explosion * expl = new Explosion(view, this, 0.5);
     expl->setX(bx);
     expl->setY(by);
     explosions.push_back(expl);
+    if (!runner->armored)
     if (dist2(bx, by, runner->x, runner->y) <= explosionRadius2)
         runner->die();
+}
+
+void Play::clearBombs()
+{
+    if (bombs.size())
+    {
+        std::list<Bomb*>::iterator bit = bombs.begin();
+        for (; bit != bombs.end(); bit++)
+            delete *bit;
+        bombs.clear();
+    }
 }
 
 void Play::clearLevel()
@@ -568,13 +626,7 @@ void Play::clearLevel()
         delete runner;
         runner = 0;
     }
-    if (bombs.size())
-    {
-        std::list<Bomb*>::iterator bit = bombs.begin();
-        for (; bit != bombs.end(); bit++)
-            delete *bit;
-        bombs.clear();
-    }
+    clearBombs();
     if (blocks.size())
     {
         std::list<Block*>::iterator bit = blocks.begin();
@@ -589,6 +641,13 @@ void Play::clearLevel()
             delete *bit;
         explosions.clear();
     }
+    if (lifts.size())
+    {
+        std::list<Lift*>::iterator bit = lifts.begin();
+        for (; bit != lifts.end(); bit++)
+            delete *bit;
+        lifts.clear();
+    }
 }
 
 bool Play::hasSurface(int x, int y) const
@@ -598,8 +657,16 @@ bool Play::hasSurface(int x, int y) const
     if ( y==0)
         return true;
 //    if (cell(x, y-1)->free())
+    for (std::list<Lift*>::const_iterator lit = lifts.begin();
+         lit != lifts.end(); lit++)
+    {
+        Lift* lift = *lit;
+        if ((int) round(lift->x) == x && (int) round(lift->y) == y)
+            return true;
+    }
     if (!isBrick(x,y-1))
         return false;
+
     return true;
 }
 
@@ -660,4 +727,16 @@ Block *Play::blockOfXY(int x, int y) const
             return block;
     }
     return 0;
+}
+
+Lift *Play::liftOfXY(int x, int y) const
+{
+    for (std::list<Lift*>::const_iterator lit = lifts.begin(); lit != lifts.end(); lit++)
+    {
+        Lift* lift = *lit;
+        if ((int) round(lift->x) == x && (int) round(lift->y) == y)
+            return lift;
+    }
+    return 0;
+
 }

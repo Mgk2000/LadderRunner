@@ -6,6 +6,7 @@
 class Bomb;
 class Explosion;
 class Block;
+class Lift;
 
 class Play : public Field
 {
@@ -60,8 +61,11 @@ public:
     std::list<Block*> blocks;
     bool canMoveTo(int x, int y) const;
     Block* blockOfXY(int x, int y) const;
+    Lift* liftOfXY(int x, int y) const;
     Ladder ladder;
     Undo undo;
- };
+    void clearBombs();
+    std::list<Lift*> lifts;
+};
 
 #endif // PLAY_H

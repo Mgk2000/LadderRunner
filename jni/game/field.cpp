@@ -9,6 +9,7 @@
 #include "play.h"
 #include "points.h"
 #include "block.h"
+#include "lift.h"
 Field::Field(View *_view) : view(_view), nlevels(0), cellWidth(1.6667 /8),
     left(0), bottom(0), scale(1.0), cellDraw(_view), runnerDraw(_view), nToolColumns(1),
     currTool(Texture::EMPTY),cells(0), saveCell(0), runner(0)
@@ -94,6 +95,13 @@ void Field::openLevel(int l, const char *levelBuf)
                     Block * block = new Block((Play*)this, Texture::BLOCK);
                     ((Play*)this)->blocks.push_back(block);
                     mo = block;
+                    break;
+                }
+                case Texture::LIFT:
+                {
+                    Lift* lift = new Lift((Play*)this);
+                    ((Play*)this)->lifts.push_back(lift);
+                    mo = lift;
                     break;
                 }
                 default:
@@ -232,8 +240,8 @@ void Field::screenToField(float x, float y, int *j, int *i)
 {
     *j = ((x+1.66667)/scale + left) /cellWidth /2;
     *i = ((y+1  )/scale + bottom) /cellWidth / 2;
-    if (*j<0 || *j>=ncols || *i < 0 || *i >=  nrows)
-        *j = -1;
+   // if (*j<0 || *j>=ncols || *i < 0 || *i >=  nrows)
+    //    *j = -1;
 }
 void Field::fieldToScreen(float fx, float fy, float* sx, float* sy)
 {
@@ -258,7 +266,7 @@ void Field::clearLevel()
 {
     if (!cells)
         return;
-    for (int i =0; i<=nrows; i++)
+    for (int i =0; i<nrows; i++)
         for (int j =0; j< ncols; j++)
             delete cells[i* ncols + j];
     delete[] cells;
@@ -313,6 +321,7 @@ bool Field::canMove(Texture::Kind _kind) const
     {
     case Texture::RUNNER:
     case Texture::BLOCK:
+    case Texture::LIFT:
         return true;
     default:
         return false;
