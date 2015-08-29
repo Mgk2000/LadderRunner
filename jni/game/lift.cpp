@@ -12,7 +12,7 @@ Lift::Lift(Play* _field) : MovingObject(_field, Texture::LIFT), block(0)
 void Lift::init()
 {
     for (int i = y+1; i< field->nrows; i++)
-        if (!field->cell(x,i)->free())
+        if (!field->cell(x,i)->free() )
         {
             y2 = i-1;
             break;
@@ -23,14 +23,15 @@ void Lift::init()
             break;
         }
     y1 = 0;
-    for (int i = y; i>= 0; i--)
-        if (field->hasSurface(x,i))
+    for (int i = y-1; i>= 0; i--)
+//        if (field->hasSurface(x,i))
+          if (field->isBrick(x,i) || field->blockOfXY(x,i) !=0)
         {
-            y1 = i;
+            y1 = i+1;
             break;
         }
-        else if (i ==0)
-            y1=0;
+        //else if (i ==0)
+//            y1=0;
 
 }
 
@@ -49,9 +50,12 @@ bool Lift::runnerWaiting()
     if (runner()->vx !=0 || runner()->vy !=0)
         return false;
     int rx = round(runner()->x);
-    if (rx < x-2 || rx > x+2 )
+    if (runner()->onBlockLift())
         return false;
-    return true;
+    if (rx >= x-2 && rx <= x+2 )
+        return true; //false;
+    return false;
+    //return true;
 }
 
 void Lift::moveToRunner()

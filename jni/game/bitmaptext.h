@@ -1,4 +1,4 @@
-#ifndef BITMAPTEXT_H
+﻿#ifndef BITMAPTEXT_H
 #define BITMAPTEXT_H
 #include <map>
 #include "drawingobject.h"
@@ -9,7 +9,7 @@ protected:
     float width;
     int index;
     void init(int nrows);
-    void initGL(int nrows);
+    void initGL();
     friend class BitmapText;
 };
 class View;

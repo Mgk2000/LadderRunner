@@ -7,8 +7,10 @@
 #include "mutex.h"
 #include <sys/stat.h>
 #include <time.h>
-View::View() : play(0)
+#include "maindialog.h"
+View::View() : play(0), dialog(0)
 {
+    mainDialog = new MainDialog(this);
 }
 
 void View::setDirName(const char *dir)
@@ -97,6 +99,7 @@ bool View::initializeGL()
 }
 int View::drawFrame()
 {
+    maxSound = 0;
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     processTouches();
 #ifdef WIN32
@@ -106,9 +109,11 @@ int View::drawFrame()
     gettimeofday(&tv, 0);
     currTime = tv.tv_sec * 1000 + tv.tv_usec / 1000;
 #endif
-
-    field->drawFrame();
-    return 0;
+    if (dialog)
+        dialog->draw();
+    else
+        field->drawFrame();
+    return maxSound;
 }
 
 void View::newLevel(int l)
@@ -277,17 +282,48 @@ void View::processTouchMove(int x, int y)
 {
     float fx, fy;
     screenToView(x,y, &fx, &fy);
-    field->processTouchMove(fx, fy);
+    if (!dialog)
+            field->processTouchMove(fx, fy);
 }
 void View::processTouchPress(int x, int y)
 {
     float fx,fy;
     screenToView(x,y, &fx, &fy);
-    field->processTouchPress(fx, fy);
+    if (dialog)
+        dialog->processTouchPress(fx, fy);
+    else
+        field->processTouchPress(fx, fy);
 }
 void View::processTouchRelease(int x, int y)
 {
     float fx,fy;
     screenToView(x,y, &fx, &fy);
-    field->processTouchRelease(fx, fy);
+    if (!dialog)
+        field->processTouchRelease(fx, fy);
+}
+
+void View::showMainDialog()
+{
+   mainDialog->show();
+}
+
+void View::sound(int sound)
+{
+    if (sound > maxSound)
+        maxSound = sound;
+}
+
+void View::closeDialog()
+{
+    dialog = 0;
+}
+
+void View::selectLevel(int l)
+{
+    sound(1000 + l);
+}
+
+void View::selectExitGame()
+{
+    maxSound = -1;
 }

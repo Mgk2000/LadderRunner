@@ -283,6 +283,11 @@ bool Field::insideField(int x, int y) const
     return isInsideRect(x,y,0,0,ncols-1, nrows-1);
 }
 
+void Field::closeDialog()
+{
+    view->dialog = 0;
+}
+
 
 void Field::checkToolButtonSwitch()
 {

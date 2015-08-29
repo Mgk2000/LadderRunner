@@ -32,6 +32,7 @@ public:
     bool armored;
     float postVX;
     virtual void fall();
+    bool onBlockLift() const;
 
 };
 

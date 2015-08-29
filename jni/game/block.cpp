@@ -2,6 +2,7 @@
 #include "play.h"
 #include "runner.h"
 #include "lift.h"
+#include "math.h"
 Block::Block(Play* _field, Texture::Kind _kind)  : MovingObject(_field, _kind)
 {
     v = 5.0;
@@ -20,7 +21,13 @@ void Block::moveStep(float delta)
             tryMoveRight(delta);
 //        catchBonus();
         if (!field->hasSurface(x, y) && y>0)
-            fall();
+        {
+            Block* block = field->blockOfXY(x, y-1);
+            if (!block)
+                if (round(field->runner->x) != round(x) ||
+                        round(field->runner->y) != round(y-1) )
+                fall();
+        }
     }
     if (stopping)
         doStop();

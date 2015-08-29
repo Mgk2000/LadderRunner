@@ -11,6 +11,8 @@ class TextureProgram;
 class RoundedRectangle;
 class Mutex;
 class ARectangle;
+class Dialog;
+class MainDialog;
 enum TouchPointState {
     TouchPointPressed    = 0x01,
     TouchPointMoved      = 0x02,
@@ -73,6 +75,16 @@ public:
     float aspect;
     int drawFrame();
     void processTouchRelease(int x, int y);
+    Dialog* dialog;
+    MainDialog* mainDialog;
+    void showMainDialog();
+    int maxSound;
+    void sound(int sound);
+    void closeDialog();
+    void setMaxLevel(int l){maxLevel = l;}
+    int maxLevel;
+    void selectLevel(int l);
+    void selectExitGame();
 };
 
 

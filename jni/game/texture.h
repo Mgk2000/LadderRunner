@@ -50,6 +50,9 @@ public:
         WALKING_RUNNER,
         BULLET_PROOF,
         LIFT,
+        MORE,
+        LESS,
+        EXIT,
         UNDO,
         ABC
     };

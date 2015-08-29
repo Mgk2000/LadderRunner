@@ -34,4 +34,16 @@ typedef Point4D Color;
 #define COLOR_LIGHTGRAY Color(0.75, 0.75, 0.75)
 #define COLOR_GRAY Color(0.5, 0.5, 0.5)
 
+struct Rect
+{
+    Rect(){}
+    Rect (float l, float b, float r, float t){left = l; bottom = b; right = r; top = t;}
+    float left, top, right, bottom;
+    bool inside(float x, float y) const {return
+           x>=left && x<=right && y >=bottom && y<=top;}
+    void shift(float dx, float dy){
+        left = left + dx; right = right +dx;
+        bottom = bottom + dy; top = top + dy;}
+};
+
 #endif // POINTS_H

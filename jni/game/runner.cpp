@@ -6,6 +6,7 @@
 #include "logmsg.h"
 #include "ladder.h"
 #include "growingcell.h"
+#include "lift.h"
 Runner::Runner(Play* _field) : MovingObject(_field, Texture::RUNNER),
     climbing(false), alive(true), phaseLength(40), lastLeft(false)
 {
@@ -281,6 +282,24 @@ int Runner::phase() const
 
 void Runner::fall()
 {
-    postVX = vx;
+    if (field->pressNearLeft || field->pressNearRight)
+        postVX = 0;
+    else
+        postVX = vx;
     MovingObject::fall();
+}
+
+bool Runner::onBlockLift() const
+{
+    Block* block = field->blockOfXY(x, y-1);
+    if (!block)
+        return false;
+    for (std::list<Lift*>::iterator lit = field->lifts.begin();
+         lit != field->lifts.end(); lit++)
+    {
+        Lift * lift = *lit;
+        if (lift->x == round(x) && lift->y1 <= y && lift->y2 >= y )
+            return true;
+    }
+    return false;
 }

@@ -6,6 +6,7 @@
 #include "block.h"
 #include "logmsg.h"
 #include "growingcell.h"
+#include "lift.h"
 
 State::State() : cells(0)
 {
@@ -92,6 +93,12 @@ void Undo::save()
         c.x = block->x;
         c.y = block->y;
     }
+    st.liftY.clear();
+    for (std::list<Lift*>::iterator lit = field->lifts.begin(); lit!= field->lifts.end(); lit++)
+    {
+        Lift* lift = *lit;
+        st.liftY.push_back(lift->y);
+    }
 }
 
 void Undo::restore()
@@ -111,7 +118,8 @@ void Undo::restore()
             if (field->cells[ind]->growing())
             {
                 GrowingCell * gcell = (GrowingCell *)field->cells[ind];
-                unsigned char k = st.cells[ind];
+                //unsigned char k = st.cells[ind];
+                unsigned char k = gcell->_kind;
                 delete gcell;
                 field->cells[ind] = new Cell((Texture::Kind)k);
             }
@@ -135,6 +143,12 @@ void Undo::restore()
     field->nRunnerBombs = st.nRunnerBombs;
     field->nRunnerKeys = st.nRunnerKeys;
     ind = (ind+size-1) % size;
+    std::list<int>::iterator it = st.liftY.begin();
+    for (std::list<Lift*>::iterator lit = field->lifts.begin(); lit!= field->lifts.end(); lit++, it++)
+    {
+        Lift* lift = *lit;
+        lift->y = *it;
+    }
 }
 
 

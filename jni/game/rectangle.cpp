@@ -46,11 +46,20 @@ void ARectangle::draw(float x1, float y1, float x2, float y2, const Point4D &col
 //    _color.alpha = 0.3;
     drawTriangles (vboIds[1]);
 }
+void ARectangle::draw(Rect&r, const Point4D &color)
+{
+    draw(r.left, r.bottom, r.right, r.top, color);
+}
 
 void ARectangle::drawFrame(float x1, float y1, float x2, float y2, float lwidth,  const Point4D &color)
 {
     setParams(x1, y1, x2, y2, color);
     drawLines(GL_LINE_LOOP, vboIds[2], nvertices, color , lwidth);
+}
+
+void ARectangle::drawFrame(Rect &r, float lwidth, const Point4D &color)
+{
+    drawFrame(r.left, r.bottom, r.right, r.top, lwidth, color);
 }
 
 void ARectangle::drawFramed(float x1, float y1, float x2, float y2, float lwidth,
@@ -61,6 +70,11 @@ void ARectangle::drawFramed(float x1, float y1, float x2, float y2, float lwidth
     _scaleX = _scaleX * (x2-x1) / (x2-x1 + lwidth/view->width);
     _scaleY= _scaleY * (y2-y1) / (y2-y1 + lwidth/view->height);
     drawLines(GL_LINE_LOOP,vboIds[2], nvertices, framecolor , lwidth);
+}
+
+void ARectangle::drawFramed(Rect &r, float lwidth, const Point4D &color, const Point4D &framecolor)
+{
+    drawFramed(r.left, r.bottom, r.right, r.top, lwidth, color, framecolor);
 }
 
 void ARectangle::setParams(float x1, float y1, float x2, float y2, const Point4D& color)

@@ -1,6 +1,7 @@
 #ifndef RECTANGLE_H
 #define RECTANGLE_H
 #include "drawingobject.h"
+#include "points.h"
 
 class ARectangle : public DrawingObject
 {
@@ -9,8 +10,12 @@ public:
     void init();
     void initGL();
     virtual void draw(float x1, float y1, float x2, float y2, const Point4D& color);
+    virtual void draw(Rect& r, const Point4D& color);
     void drawFrame(float x1, float y1, float x2, float y2, float lwidth, const Point4D& color);
+    void drawFrame(Rect& r, float lwidth, const Point4D& color);
     void drawFramed(float x1, float y1, float x2, float y2, float lwidth,
+                    const Point4D& color, const Point4D& framecolor);
+    void drawFramed(Rect& r, float lwidth,
                     const Point4D& color, const Point4D& framecolor);
 protected:
     virtual void setParams(float x1, float y1, float x2, float y2, const Point4D& color);

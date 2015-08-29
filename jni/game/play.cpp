@@ -19,7 +19,7 @@ Play::Play(View *_view) : Field(_view), ladder(_view, this)
     bombBarLeft = 1.4;
     bombBarBottom = 0.9;
     bombBarWidth=0.1;
-    explosionRadius = 4.0;
+    explosionRadius = 3.9;
     explosionRadius2 = sqr(explosionRadius);
 }
 
@@ -36,7 +36,7 @@ void Play::drawFrame()
 
 }
 
-void Play::openLevel(int l)
+/*void Play::openLevel(int l)
 {
     playing = true;
     Field::openLevel(l);
@@ -50,7 +50,7 @@ void Play::openLevel(int l)
     nRunnerKeys = 0;
     nRunnerBombs = 0;
     levelDone = false;
-}
+}*/
 
 void Play::openLevel(int l, const char *buf)
 {
@@ -67,6 +67,7 @@ void Play::openLevel(int l, const char *buf)
     levelDone = false;
     playing = true;
     undo.init(this);
+//    showMainDialog();
 }
 
 void Play::processTouchPress(float x, float y)
@@ -126,13 +127,21 @@ void Play::processTouchPress(float x, float y)
     {
         if (!runner->busy())
         if (runner->canMoveLeft())
+        {
+            float dx = runner->x - j;
+            this->pressNearLeft = (dx>0 && dx <=1.1);
             runner->moveLeft();
+        }
     }
     else if (j > runner->x /*|| pressedRightMove (x,y)*/)
     {
         if (!runner->busy())
         if (runner->canMoveRight())
+        {
+            float dx = j -  runner->x - j;
             runner->moveRight();
+            this->pressNearRight = (dx>0 && dx <=1.1);
+        }
     }
     else if (pressedUpMove (x,y))
     {
@@ -161,6 +170,9 @@ bool Play::isLeftCorner(int x, int y) const
 //    Cell* cell = this->cell(x,y);
 //    if (cell->growing() && ((GrowingCell*)cell)->solid())
 //        return false;
+    Lift* lift = liftOfXY(x-1,y);
+    if (lift)
+        return false;
     return isBrick(x,y) && !isBrick(x-1,y) && !isBrick(x-1, y+1) && !isBrick(x, y+1);
 }
 
@@ -171,6 +183,9 @@ bool Play::isRightCorner(int x, int y) const
 //    Cell* cell = this->cell(x,y);
 //    if (cell->growing() && ((GrowingCell*)cell)->solid())
 //        return false;
+    Lift* lift = liftOfXY(x+1,y);
+    if (lift)
+        return false;
     return isBrick(x,y) && !isBrick(x+1,y) && !isBrick(x+1, y+1) && !isBrick(x, y+1);
 }
 
@@ -178,6 +193,20 @@ bool Play::isRightCorner(int x, int y) const
 void Play::draw()
 {
     drawField();
+    for (int i =0; i< nrows; i++)
+        for (int j =0; j< ncols; j++)
+            if (cell(j, i)->growing())
+            {\
+                //if (j==5 && i ==2)
+                //    LOGD("GROWing");
+                GrowingCell* gc = (GrowingCell*) cell(j, i);
+                if (gc->out())
+                    if (blockOfXY(j, i) != 0)
+                {
+                    delete gc;
+                    cells[j+ncols * i] = new Cell(Texture::EMPTY);
+                }
+            }
     drawMoveables();
     drawToolbar();
 }
@@ -284,6 +313,8 @@ void Play::moveStep()
 
 void Play::adjustScreenPosition()
 {
+    if (!runner)
+        return;
     if (runner->x < nScreenXCells/scale*0.5)
         left = 0;
     else if (runner->x > ncols - nScreenXCells /scale *0.5)
@@ -331,6 +362,8 @@ void Play::fillTools()
     tools.push_back(new ToolButton(Texture::ZOOM_OUT));
     tools.push_back(new ToolButton(Texture::EMPTY));
     tools.push_back(new ToolButton(Texture::UNDO));
+    tools.push_back(new ToolButton(Texture::EMPTY));
+    tools.push_back(new ToolButton(Texture::EXIT));
 
     setToolButtonsCoords();
 }
@@ -394,6 +427,7 @@ bool Play::canLadder(int x1, int y1, int x2, int y2) const
     {
         if (x2>x1)
         {
+            dx = dx - 0.5;
             if (!isLeftCorner(x2,y2-1) && cell(x2,y2)->kind() != Texture::OPEN_DOOR)
                 return false;
             if (y2-y1 > x2-x1)
@@ -401,7 +435,7 @@ bool Play::canLadder(int x1, int y1, int x2, int y2) const
                 for (int i = y1+1; i < y2; i++)
                 {
                     float fxx = x1 + 1.0* dx* (i-y1) / (y2-y1);
-                    int xx = fxx;
+                    int xx = round(fxx);
                     if (xx==x2 && i == y2-1)
                         continue;
                     if (isBrick(xx, i))
@@ -433,6 +467,8 @@ bool Play::canLadder(int x1, int y1, int x2, int y2) const
         }
         else
         {
+            if (x1 != x2)
+                dx = dx + 0.5;
             if (!isRightCorner(x2,y2-1) && cell(x2,y2)->kind() != Texture::OPEN_DOOR)
                 return false;
             if (y2-y1 > x1-x2)
@@ -445,11 +481,14 @@ bool Play::canLadder(int x1, int y1, int x2, int y2) const
                         continue;
                     if (isBrick(xx, i))
                           return false;
-                    xx = fxx + 1.0;
-                    if (xx==x2 && i == y2-1)
-                        continue;
-                    if (isBrick(xx, i))
-                          return false;
+                    if (x1 !=x2)
+                    {
+                        xx = fxx + 1.0;
+                        if (xx==x2 && i == y2-1)
+                            continue;
+                        if (isBrick(xx, i))
+                              return false;
+                    }
                 }
                 return true;
             }
@@ -558,6 +597,9 @@ void Play::processToolbarPress(float x, float y)
                if (undo.canRestore())
                    undo.restore();
                break;
+           case Texture::EXIT:
+               view->showMainDialog();
+               break;
            default: break;
            }
         }
@@ -591,7 +633,7 @@ void Play::doExplosion(float bx, float by, std::list<Bomb*>* explosedBombs)
                     }
                     else if (cell(j,i)->kind() == Texture::BOMB)
                     {
-                        Bomb* b = new Bomb(view, this, view->textures[Texture::BOMB]);
+                        Bomb* b = new Bomb(view, this, view->textures[Texture::BURNING_BOMB]);
                         b->setX(j);
                         b->setY(i);
                         explosedBombs->push_back(b);
@@ -617,6 +659,11 @@ void Play::clearBombs()
             delete *bit;
         bombs.clear();
     }
+}
+
+void Play::showMainDialog()
+{
+   view->showMainDialog();
 }
 
 void Play::clearLevel()
@@ -664,10 +711,11 @@ bool Play::hasSurface(int x, int y) const
         if ((int) round(lift->x) == x && (int) round(lift->y) == y)
             return true;
     }
-    if (!isBrick(x,y-1))
-        return false;
-
-    return true;
+    if (isBrick(x,y-1))
+        return true;
+    if (blockOfXY(x, y-1) != 0)
+        return true;
+    return false;
 }
 
 bool Play::isBrick(int x, int y) const
@@ -720,6 +768,8 @@ bool Play::canMoveTo(int x, int y) const
 Block *Play::blockOfXY(int x, int y) const
 {
     //LOGD ("blockOfXY x=%d, y=%d", x, y);
+    if (y<0 || y >=nrows)
+        return 0;
     for (std::list<Block*>::const_iterator bit = blocks.begin(); bit != blocks.end(); bit++)
     {
         Block* block = *bit;

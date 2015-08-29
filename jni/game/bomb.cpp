@@ -61,7 +61,7 @@ void Bomb::initGL()
 void Bomb::moveStep(float delta)
 {
     int n = (field->currTime() -lastTime);
-    if (n> 300)
+    if (n> 100)
     {
         lastTime = field->currTime();
         phase = (phase +1) % 4;

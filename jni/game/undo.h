@@ -21,6 +21,7 @@ struct State
     int nRunnerBombs, nRunnerKeys;
     void clear();
     bool armored;
+    std::list<int> liftY;
 };
 
 class Undo

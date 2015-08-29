@@ -13,7 +13,7 @@ class Play : public Field
 public:
     Play(View* _view);
     void drawFrame();
-    virtual void openLevel(int l);
+    /*virtual void openLevel(int l);*/
     void openLevel(int l, const char* buf);
 
     virtual void processTouchMove(float x, float y) {}
@@ -66,6 +66,8 @@ public:
     Undo undo;
     void clearBombs();
     std::list<Lift*> lifts;
+    void showMainDialog();
+    bool pressNearLeft, pressNearRight;
 };
 
 #endif // PLAY_H
