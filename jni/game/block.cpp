@@ -20,13 +20,24 @@ void Block::moveStep(float delta)
         else if (vx > 0)
             tryMoveRight(delta);
 //        catchBonus();
-        if (!field->hasSurface(x, y) && y>0)
+        if (!field->hasSurface(round(x), y) && y>0)
         {
-            Block* block = field->blockOfXY(x, y-1);
+            //Block* block = field->blockOfXY(x, y-1);
+            Block* block = blockUnder();
             if (!block)
-                if (round(field->runner->x) != round(x) ||
+                if (fabs(field->runner->x - x) >=1 ||
                         round(field->runner->y) != round(y-1) )
-                fall();
+            {
+                Lift * lift = liftUnder();
+                if (!lift)
+                {
+                    block = blockUnder();
+                    lift = liftUnder();
+                    bool b = field->hasSurface(x, y);
+                    fall();
+                }
+
+            }
         }
     }
     if (stopping)
@@ -60,5 +71,54 @@ void Block::doStop()
     Lift* lift = field->liftOfXY(x, y);
     if (lift)
         lift->block = this;
+
+}
+
+Block *Block::blockUnder() const
+{
+    for (std::list<Block*>::const_iterator bit = field->blocks.begin();
+         bit != field->blocks.end(); bit++)
+    {
+        if (*bit == this )
+            continue;
+        Block* block = *bit;
+        if (fabs(x-block->x) >0.1)
+            continue;
+        if (y- block->y>1)
+            continue;
+        if (y- block->y< -0.5)
+            continue;
+        return block;
+    }
+    return 0;
+}
+
+Block *Block::blockAbove() const
+{
+    for (std::list<Block*>::const_iterator bit = field->blocks.begin();
+         bit != field->blocks.end(); bit++)
+    {
+        if (*bit == this )
+            continue;
+        Block* block = *bit;
+        if (abs(x-block->x) >0.1)
+            continue;
+        if (block->y - y >1.3)
+            continue;
+        if (block->y - y < -0.5)
+            continue;
+        return block;
+    }
+    return 0;
+
+}
+
+Lift *Block::liftUnder() const
+{
+    for (std::list<Lift*>::const_iterator lit = field->lifts.begin();
+         lit != field->lifts.end(); lit++)
+        if ((*lit)->block == this)
+            return *lit;
+    return 0;
 
 }

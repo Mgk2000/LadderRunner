@@ -3,7 +3,8 @@
 #include "play.h"
 #include "math.h"
 
-MovingObject::MovingObject(Play* _field, Texture::Kind _kind) : Cell (_kind), field(_field), falling(false)
+MovingObject::MovingObject(Play* _field, Texture::Kind _kind) :
+    Cell (_kind), field(_field), falling(false), marked(false)
 {
     vy = 0;
     vx = 0;
@@ -92,8 +93,11 @@ void MovingObject::checkStop()
 
 void MovingObject::fall()
 {
+    //if (!marked)
+    //    LOGD("Fall");
     if (vx <=0)
-        x = (int) x;
+        //x = (int) x;
+        x = round(x);
     vy = - 1.3 * v;
     vx = 0;
     falling = true;
@@ -111,12 +115,16 @@ bool MovingObject::checkFall(float delta)
     }
     int in = nexty;
     for (int i = iy; i>=in; i--)
+    {
+//        if (i ==2)
+//            LOGD("Checkfall");
         if (field->hasSurface(x, i))
         {
             y = i;
             doStop();
             return true;
         }
+    }
     y = nexty;
     return false;
 }

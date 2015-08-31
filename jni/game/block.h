@@ -1,7 +1,7 @@
 #ifndef BLOCK_H
 #define BLOCK_H
 #include "movingobject.h"
-
+class Lift;
 class Block : public MovingObject
 {
 public:
@@ -10,6 +10,9 @@ public:
     virtual void moveLeft();
     virtual void moveRight();
     virtual void doStop();
+    Block* blockUnder() const;
+    Block* blockAbove() const;
+    Lift * liftUnder() const;
 };
 
 #endif // BLOCK_H

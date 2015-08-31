@@ -22,6 +22,7 @@ class CellDraw : public DrawingObject
 public:
     CellDraw(View* view);
     void draw(Cell* cell, float _x, float _y, float _scale);
+    void draw(Cell* cell, float _x, float _y, float _scale, Point4D& colorm);
     void draw(Texture::Kind kind, float _x, float _y, float _scale);
     void initGL();
     virtual bool moveable() const {return false;}

@@ -32,6 +32,7 @@ public:
     virtual bool canMoveRight() const;
     bool leftFree(int x, int y) const;
     bool rightFree(int x, int y) const;
+    bool marked;
 
 
 };

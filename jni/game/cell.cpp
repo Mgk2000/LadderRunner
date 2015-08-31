@@ -74,6 +74,12 @@ void CellDraw::draw(Cell *cell, float _x, float _y, float _scale)
     draw ((Texture::Kind)cell->kind(), _x, _y, _scale);
 }
 
+void CellDraw::draw(Cell *cell, float _x, float _y, float _scale, Point4D &colorm)
+{
+    _colorMult = colorm;
+    draw ((Texture::Kind)cell->kind(), _x, _y, _scale);
+}
+
 void CellDraw::draw(Texture::Kind kind, float _x, float _y, float _scale)
 {
     if (kind == Texture::EMPTY)

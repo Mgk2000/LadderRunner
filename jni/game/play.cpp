@@ -111,9 +111,18 @@ void Play::processTouchPress(float x, float y)
 //            runner->moveLeft();
 //            return;
 //        }
-        if (!runner->busy())
+        if (!runner->busy() || !runner->strongClimbing())
+        {
+            if (this->canLadder(runner->x, runner->y, j, i))
+            {
+                runner->climb(j,i);
+                //runner->setX(j);
+                //runner->setY(i);
+                return;
+            }
         for (int ii = i-1; ii <= i+1; ii++)
             for (int jj = j-1; jj <=j+1; jj++)
+                if (i != ii || j != jj)
                 if (this->canLadder(runner->x, runner->y, jj, ii))
                 {
                     runner->climb(jj,ii);
@@ -121,6 +130,7 @@ void Play::processTouchPress(float x, float y)
                     //runner->setY(i);
                     return;
                 }
+        }
     //    LOGD("Pressed x=%d y=%d", j, i);
     }
     if (j < runner->x /*|| pressedLeftMove (x,y)*/)
@@ -170,7 +180,7 @@ bool Play::isLeftCorner(int x, int y) const
 //    Cell* cell = this->cell(x,y);
 //    if (cell->growing() && ((GrowingCell*)cell)->solid())
 //        return false;
-    Lift* lift = liftOfXY(x-1,y);
+    Lift* lift = liftOfXY(x-1,y+1);
     if (lift)
         return false;
     return isBrick(x,y) && !isBrick(x-1,y) && !isBrick(x-1, y+1) && !isBrick(x, y+1);
@@ -183,7 +193,7 @@ bool Play::isRightCorner(int x, int y) const
 //    Cell* cell = this->cell(x,y);
 //    if (cell->growing() && ((GrowingCell*)cell)->solid())
 //        return false;
-    Lift* lift = liftOfXY(x+1,y);
+    Lift* lift = liftOfXY(x+1,y+1);
     if (lift)
         return false;
     return isBrick(x,y) && !isBrick(x+1,y) && !isBrick(x+1, y+1) && !isBrick(x, y+1);
@@ -229,8 +239,13 @@ void Play::drawMoveables()
     for (; it != blocks.end(); it++)
     {
         Block* bl = *it;
+        Point4D colorm;
+        if (!bl->marked)
+            colorm = Point4D(1,1,1,1);
+        else
+            colorm = Point4D(1,0,0,1);
         fieldToScreen(bl->x, bl->y, &xx, &yy);
-        cellDraw.draw(bl, xx, yy ,cellWidth*scale);
+        cellDraw.draw(bl, xx, yy ,cellWidth*scale, colorm);
     }
     std::list<Lift*>::iterator lit = lifts.begin();
     for (; lit != lifts.end(); lit++)
@@ -273,8 +288,12 @@ void Play::moveStep()
             this->restart();
         return;
     }
+    for (std::list<Block*>::iterator bit = blocks.begin(); bit != blocks.end(); bit++)
+        if ((*bit)->falling)
+        (*bit)->moveStep(delta);
     runner->moveStep(delta);
     for (std::list<Block*>::iterator bit = blocks.begin(); bit != blocks.end(); bit++)
+        if (!(*bit)->falling)
         (*bit)->moveStep(delta);
     std::list<Bomb*>::iterator bit = bombs.begin();
     std::list<Bomb*>explosedBombs;
@@ -308,7 +327,7 @@ void Play::moveStep()
         }
     }
     for (std::list<Lift*>::iterator lit = lifts.begin(); lit != lifts.end(); lit++)
-        (*lit)->moveStep(delta);
+            (*lit)->moveStep(delta);
 }
 
 void Play::adjustScreenPosition()
@@ -713,12 +732,13 @@ bool Play::hasSurface(int x, int y) const
     }
     if (isBrick(x,y-1))
         return true;
-    if (blockOfXY(x, y-1) != 0)
+    Block * block = blockOfXY(x, y-1);
+    if ( block!= 0 && block->vy > -4 )
         return true;
     return false;
 }
 
-bool Play::isBrick(int x, int y) const
+bool Play::isBrick(int x, int y, bool exact) const
 {
     switch (cell(x,y)->kind())
     {
@@ -730,7 +750,8 @@ bool Play::isBrick(int x, int y) const
     case Texture::BIG_SOFT_BRICK:
         return true;
     default:
-        //return false;
+        if (exact)
+           return false;
         return isBlock(x,y);
     }
 }

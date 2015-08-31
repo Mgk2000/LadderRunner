@@ -33,6 +33,7 @@ public:
     float postVX;
     virtual void fall();
     bool onBlockLift() const;
+    bool strongClimbing() const;
 
 };
 

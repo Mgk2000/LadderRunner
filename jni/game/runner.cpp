@@ -79,7 +79,7 @@ void Runner::moveStep(float delta)
         else if (vx > 0)
             tryMoveRight(delta);
         catchBonus();
-        if (!field->hasSurface(x, y))
+        if (!field->hasSurface(round(x), y))
             fall();
     }
     if (stopping)
@@ -287,6 +287,7 @@ void Runner::fall()
     else
         postVX = vx;
     MovingObject::fall();
+   // vy = -0.3*v;
 }
 
 bool Runner::onBlockLift() const
@@ -302,4 +303,9 @@ bool Runner::onBlockLift() const
             return true;
     }
     return false;
+}
+
+bool Runner::strongClimbing() const
+{
+    return climbing && y != climbY;
 }

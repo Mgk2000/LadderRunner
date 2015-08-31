@@ -63,10 +63,10 @@ void Lift::moveToRunner()
     if (abs(y-runner()->y) < 0.1)
     {
         y = runner()->y;
-        vy = 0;
-        return;
+        //vy = 0;
+        doStop();
     }
-    if (runner()->y > y)
+    else if (runner()->y > y)
         vy = v;
     else if (runner()->y < y)
         vy = -v;
@@ -75,17 +75,38 @@ void Lift::moveToRunner()
 
 void Lift::moveStep(float delta)
 {
+    float saveY = y;
     MovingObject::moveStep(delta);
     if (runnerWaiting())
         moveToRunner();
-    else if (abs(vy)>0.1)
+    else if (abs(vy) >0.1)
         doStop();
 
-    if (block)
     {
-        block->setX(x);
-        block->setY(y);
-        block->setVX(0);
-        block->setVY(vy);
+        int i =0;
+        if (vy >0 )
+        for (Block* upblock = block ;;i++)
+        {
+            if (!upblock)
+                break;
+            if (y+i >= field->nrows || field->isBrick(x, y+i+1, true))
+            {
+                y = saveY;
+                doStop();
+                return;
+            }
+            upblock  = upblock->blockAbove();
+        }
+        i=0;
+        for (Block* upblock = block ;;i++)
+        {
+            if (!upblock)
+                break;
+            upblock->setX(x);
+            upblock->setY(y+i);
+            upblock->setVX(0);
+            upblock->setVY(vy);
+            upblock  = upblock->blockAbove();
+        }
     }
 }

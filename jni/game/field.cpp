@@ -95,6 +95,8 @@ void Field::openLevel(int l, const char *levelBuf)
                     Block * block = new Block((Play*)this, Texture::BLOCK);
                     ((Play*)this)->blocks.push_back(block);
                     mo = block;
+                    //if (i==2)
+                     //   block->marked = true;
                     break;
                 }
                 case Texture::LIFT:

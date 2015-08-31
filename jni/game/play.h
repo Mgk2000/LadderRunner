@@ -20,7 +20,7 @@ public:
     virtual void processTouchPress(float x, float y) ;
     virtual void processTouchRelease(float x, float y);
     bool hasSurface(int x, int y) const;
-    bool isBrick(int x, int y) const;
+    bool isBrick(int x, int y, bool exact = false) const;
     bool isBlock(int x, int y) const;
     bool isHanging(int x, int y) const;
 
