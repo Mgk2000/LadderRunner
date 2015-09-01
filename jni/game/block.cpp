@@ -10,6 +10,8 @@ Block::Block(Play* _field, Texture::Kind _kind)  : MovingObject(_field, _kind)
 
 void Block::moveStep(float delta)
 {
+    if (x>999)
+        return;
     if (falling)
         if (checkFall(delta))
             field->runner->catchBonus();

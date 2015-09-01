@@ -68,6 +68,8 @@ public:
     std::list<Lift*> lifts;
     void showMainDialog();
     bool pressNearLeft, pressNearRight;
+    bool firstStep;
+    void fireBombBlock(Block* block);
 };
 
 #endif // PLAY_H

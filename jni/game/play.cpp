@@ -67,6 +67,7 @@ void Play::openLevel(int l, const char *buf)
     levelDone = false;
     playing = true;
     undo.init(this);
+    firstStep = true;
 //    showMainDialog();
 }
 
@@ -77,20 +78,50 @@ void Play::processTouchPress(float x, float y)
        processToolbarPress(x,y);
        return;
    }
-   if (nRunnerBombs>0 &&
+   if ((nRunnerBombs>0 || runner->nearBombBlock()) &&
         (x>= bombBarLeft - bombBarWidth) &&
         (x<= bombBarLeft + bombBarWidth) &&
         (y>= bombBarBottom - bombBarWidth) &&
         (y <= bombBarBottom + bombBarWidth))
    {
-       if (!bombs.size())
+       if (!bombs.size() || runner->nearBombBlock())
            undo.save();
-
-       Bomb* bomb = new Bomb(view, this, view->textures[Texture::BURNING_BOMB]);
-       bomb->setX(runner->x);
-       bomb->setY(runner->y);
-       bombs.push_back(bomb);
-       nRunnerBombs--;
+       if (runner->nearBombBlock())
+       {
+           if (runner->leftBlock && runner->leftBlock->bombed())
+           {
+               fireBombBlock(runner->leftBlock);
+               runner->leftBlock = 0;
+           }
+           if (runner->rightBlock && runner->rightBlock->bombed())
+           {
+               fireBombBlock(runner->rightBlock);
+               runner->rightBlock = 0;
+           }
+           if (runner->topBlock && runner->topBlock->bombed())
+           {
+               fireBombBlock(runner->topBlock);
+               runner->topBlock = 0;
+           }
+           if (runner->bottomBlock && runner->bottomBlock->bombed())
+           {
+               fireBombBlock(runner->bottomBlock);
+               runner->bottomBlock = 0;
+           }
+           if (runner->inBlock && runner->inBlock->bombed())
+           {
+               fireBombBlock(runner->inBlock);
+               runner->inBlock = 0;
+           }
+       }
+       else
+       {
+           Bomb* bomb = new Bomb(view, this, view->textures[Texture::BURNING_BOMB]);
+           bomb->setX(runner->x);
+           bomb->setY(runner->y);
+           bombs.push_back(bomb);
+           nRunnerBombs--;
+       }
        return;
    }
     int j, i;
@@ -239,6 +270,8 @@ void Play::drawMoveables()
     for (; it != blocks.end(); it++)
     {
         Block* bl = *it;
+        if (bl->x > 999)
+            continue;
         Point4D colorm;
         if (!bl->marked)
             colorm = Point4D(1,1,1,1);
@@ -278,6 +311,11 @@ bool Play::pressedUpMove(float x, float y) const
 
 void Play::moveStep()
 {
+    if (firstStep)
+    {
+        runner->calcNearBlocks();;
+        firstStep = false;
+    }
     float delta = (currTime() - prevTime) / 1000.0;
     prevTime = currTime();
     if (delta>0.1)
@@ -328,6 +366,7 @@ void Play::moveStep()
     }
     for (std::list<Lift*>::iterator lit = lifts.begin(); lit != lifts.end(); lit++)
             (*lit)->moveStep(delta);
+    runner->calcNearBlocks();;
 }
 
 void Play::adjustScreenPosition()
@@ -363,7 +402,9 @@ void Play::drawToolbar()
 {
     rect()->draw(toolbarLeft, toolbarBottom, toolbarRight, toolbarTop, Point4D(0.75, 0.75, 0.75, 0.3));
     Field::drawToolbar();
-    if (nRunnerBombs >0)
+    if (runner->nearBombBlock())
+        cellDraw.draw(Texture::BOMB_BLOCK,  bombBarLeft, bombBarBottom, 1.0/8);
+    else if (nRunnerBombs >0)
     {
         cellDraw.draw(Texture::BOMB,  bombBarLeft, bombBarBottom, 1.0/8);
         char buf[8];
@@ -660,6 +701,24 @@ void Play::doExplosion(float bx, float by, std::list<Bomb*>* explosedBombs)
 
                     }
                 }
+    bool blockFired = true;
+    while (blockFired)
+    {
+        blockFired = false;
+        std::list <Block*>::iterator bit = blocks.begin();
+        for (; bit != blocks.end(); bit++)
+        {
+            Block* block = *bit;
+            if (!block->bombed())
+                continue;
+            if (dist2(bx, by, block->x ,block->y) <=explosionRadius2)
+            {
+                fireBombBlock(block);
+                blockFired = true;
+                break;
+            }
+        }
+    }
     Explosion * expl = new Explosion(view, this, 0.5);
     expl->setX(bx);
     expl->setY(by);
@@ -682,7 +741,24 @@ void Play::clearBombs()
 
 void Play::showMainDialog()
 {
-   view->showMainDialog();
+    view->showMainDialog();
+}
+
+void Play::fireBombBlock(Block *block)
+{
+    Bomb* bomb = new Bomb(view, this, view->textures[Texture::BURNING_BOMB]);
+    bomb->setX(block->x);
+    bomb->setY(block->y);
+    bombs.push_back(bomb);
+    /*std::list<Block*>::iterator bit = blocks.begin();
+    for(; bit != blocks.end(); bit++)
+        if (*bit == block)
+        {
+            bit = blocks.erase(bit);
+            break;
+        }
+    delete block;*/
+    block->setX(1000);
 }
 
 void Play::clearLevel()

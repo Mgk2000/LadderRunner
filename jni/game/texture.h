@@ -50,6 +50,7 @@ public:
         WALKING_RUNNER,
         BULLET_PROOF,
         LIFT,
+        BOMB_BLOCK,
         MORE,
         LESS,
         EXIT,

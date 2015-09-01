@@ -9,6 +9,7 @@
 #include "play.h"
 #include "points.h"
 #include "block.h"
+#include "bombblock.h"
 #include "lift.h"
 Field::Field(View *_view) : view(_view), nlevels(0), cellWidth(1.6667 /8),
     left(0), bottom(0), scale(1.0), cellDraw(_view), runnerDraw(_view), nToolColumns(1),
@@ -93,6 +94,15 @@ void Field::openLevel(int l, const char *levelBuf)
                 case Texture::BLOCK:
                 {
                     Block * block = new Block((Play*)this, Texture::BLOCK);
+                    ((Play*)this)->blocks.push_back(block);
+                    mo = block;
+                    //if (i==2)
+                     //   block->marked = true;
+                    break;
+                }
+                case Texture::BOMB_BLOCK:
+                {
+                    BombBlock * block = new BombBlock((Play*)this, Texture::BOMB_BLOCK);
                     ((Play*)this)->blocks.push_back(block);
                     mo = block;
                     //if (i==2)
@@ -328,6 +338,7 @@ bool Field::canMove(Texture::Kind _kind) const
     {
     case Texture::RUNNER:
     case Texture::BLOCK:
+    case Texture::BOMB_BLOCK:
     case Texture::LIFT:
         return true;
     default:

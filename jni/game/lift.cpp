@@ -84,6 +84,8 @@ void Lift::moveStep(float delta)
 
     {
         int i =0;
+        if (block && block->x > 999)
+            block = 0;
         if (vy >0 )
         for (Block* upblock = block ;;i++)
         {

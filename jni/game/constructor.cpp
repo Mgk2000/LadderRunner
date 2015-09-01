@@ -81,6 +81,7 @@ void Constructor::fillTools()
     tools.push_back(new ToolButton(Texture::BIG_SOFT_BRICK));
     tools.push_back(new ToolButton(Texture::BLOCK));
     tools.push_back(new ToolButton(Texture::BOMB));
+    tools.push_back(new ToolButton(Texture::BOMB_BLOCK));
     tools.push_back(new ToolButton(Texture::GOLDEN_KEY));
     tools.push_back(new ToolButton(Texture::DOOR));
     tools.push_back(new ToolButton(Texture::BULLET_PROOF));

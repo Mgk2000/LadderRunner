@@ -1,6 +1,7 @@
 #ifndef RUNNER_H
 #define RUNNER_H
 #include "movingobject.h"
+class Block;
 class Runner : public MovingObject
 {
 public:
@@ -34,6 +35,10 @@ public:
     virtual void fall();
     bool onBlockLift() const;
     bool strongClimbing() const;
+    bool nearBombBlock() const;
+    Block *leftBlock, *topBlock , *rightBlock, *bottomBlock, *inBlock;
+    void calcNearBlocks();
+    void clearNearBlocks();
 
 };
 

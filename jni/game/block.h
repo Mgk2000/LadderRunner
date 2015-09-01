@@ -6,6 +6,7 @@ class Block : public MovingObject
 {
 public:
     Block(Play* _field, Texture::Kind _kind);
+    virtual ~Block() {}
     void moveStep(float delta);
     virtual void moveLeft();
     virtual void moveRight();
@@ -13,6 +14,7 @@ public:
     Block* blockUnder() const;
     Block* blockAbove() const;
     Lift * liftUnder() const;
+    virtual bool bombed() const {return false;}
 };
 
 #endif // BLOCK_H

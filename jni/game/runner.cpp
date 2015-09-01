@@ -12,6 +12,7 @@ Runner::Runner(Play* _field) : MovingObject(_field, Texture::RUNNER),
 {
     v = 5.0;
     postVX = 0;
+    clearNearBlocks();
 }
 
 void Runner::climb(int _x, int _y)
@@ -101,7 +102,8 @@ void Runner::catchBonus()
         field->cell(x,y)->setKind(Texture::EMPTY);
         break;
     case Texture::OPEN_DOOR:
-        field->doLevelDone();
+        if (fabs(x- int(x)) < 0.2 && fabs(y- int(y)) < 0.2)
+            field->doLevelDone();
         break;
     case Texture::BULLET_PROOF:
         armored = true;
@@ -308,4 +310,49 @@ bool Runner::onBlockLift() const
 bool Runner::strongClimbing() const
 {
     return climbing && y != climbY;
+}
+
+void Runner::calcNearBlocks()
+{
+    clearNearBlocks();
+    std::list<Block*>::iterator bit = field->blocks.begin();
+    for (; bit != field->blocks.end(); bit++)
+    {
+        Block* block = *bit;
+        if (fabs(x-block->x) < 0.2 && fabs(y-block->y) < 0.2 )
+            inBlock = block;
+        else if (fabs(x-block->x) < 0.2 && y - block->y > 0.8 && y - block->y < 1.2)
+            bottomBlock = block;
+        else if (fabs(x-block->x) < 0.2 && y - block->y > -1.2 && y - block->y < -0.8)
+            topBlock = block;
+        else if (fabs(y-block->y) < 0.2 && x - block->x > -1.2 && x - block->x < -0.8)
+            rightBlock = block;
+        else if (fabs(y-block->y) < 0.2 && x - block->x > 0.8 && x - block->x < 1.2)
+            leftBlock = block;
+    }
+}
+
+void Runner::clearNearBlocks()
+{
+    leftBlock = 0;
+    inBlock = 0;
+    topBlock = 0;
+    rightBlock = 0;
+    bottomBlock = 0;
+
+}
+
+bool Runner::nearBombBlock() const
+{
+    if (inBlock && inBlock->bombed())
+        return true;
+    if (leftBlock && leftBlock->bombed())
+        return true;
+    if (topBlock && topBlock->bombed())
+        return true;
+    if (rightBlock && rightBlock->bombed())
+        return true;
+    if (bottomBlock && bottomBlock->bombed())
+        return true;
+
 }
