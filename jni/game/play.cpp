@@ -16,10 +16,14 @@ Play::Play(View *_view) : Field(_view), ladder(_view, this)
 {
    // playing = true;
     fillTools();
-    bombBarLeft = 1.4;
+    bombBarLeft = 1.05;
     bombBarBottom = 0.9;
     bombBarWidth=0.1;
+    grenadeBarLeft = 1.4;
+    grenadeBarBottom = 0.9;
+    grenadeBarWidth=0.1;
     explosionRadius = 3.9;
+    grenadePutX = -1000;
     explosionRadius2 = sqr(explosionRadius);
 }
 
@@ -64,10 +68,14 @@ void Play::openLevel(int l, const char *buf)
     }
     nRunnerKeys = 0;
     nRunnerBombs = 0;
+    nRunnerGrenades = 0;
     levelDone = false;
     playing = true;
     undo.init(this);
     firstStep = true;
+    scale = 0.5;
+    topY = topY+2;
+//    view->resizeGL(view->width, view->height);
 //    showMainDialog();
 }
 
@@ -122,6 +130,18 @@ void Play::processTouchPress(float x, float y)
            bombs.push_back(bomb);
            nRunnerBombs--;
        }
+       return;
+   }
+   if ((nRunnerGrenades>0) &&
+        (x>= grenadeBarLeft - grenadeBarWidth) &&
+        (x<= grenadeBarLeft + grenadeBarWidth) &&
+        (y>= grenadeBarBottom - grenadeBarWidth) &&
+        (y <=grenadeBarBottom + grenadeBarWidth))
+   {
+       cell(runner->x,runner->y)->setKind(Texture::GRENADE);
+       nRunnerGrenades--;
+       grenadePutX = round(runner->x);
+       grenadePutY = round(runner->y);
        return;
    }
     int j, i;
@@ -184,10 +204,10 @@ void Play::processTouchPress(float x, float y)
             this->pressNearRight = (dx>0 && dx <=1.1);
         }
     }
-    else if (pressedUpMove (x,y))
-    {
-        showLadderHints();
-    }
+    //else if (pressedUpMove (x,y))
+    //{
+    //    showLadderHints();
+    //}
 }
 
 void Play::processTouchRelease(float x, float y)
@@ -371,7 +391,7 @@ void Play::moveStep()
 
 void Play::adjustScreenPosition()
 {
-    if (!runner)
+    if (!runner || runner->climbing)
         return;
     if (runner->x < nScreenXCells/scale*0.5)
         left = 0;
@@ -379,12 +399,17 @@ void Play::adjustScreenPosition()
         left = (ncols-nScreenXCells /scale) * 2 * cellWidth;
     else
         left = (runner->x - nScreenXCells/scale*0.5) * 2 * cellWidth;
-    if (runner->y < nScreenXCells/scale*0.5 -2)
+    if (nScreenXCells/scale * 0.5 >= topY+1)
         bottom = 0;
-    else if (runner->y > nrows - nScreenXCells/scale*0.5 * 0.6)
-        bottom = (nrows-nScreenXCells/scale*0.6) * 2 * cellWidth;
+    else if (runner->y < nScreenXCells/scale*0.5 -2)
+        bottom = 0;
+    else if (runner->y > topY - nScreenXCells/scale*0.5 * 0.6)
+        bottom = (/*nrows*/ topY + 3 -nScreenXCells/scale*0.6) * 2 * cellWidth;
     else
         bottom = (runner->y - nScreenXCells/scale*0.5*0.4) * 2 * cellWidth;
+//        bottom = (runner->y - topY + 2) * 2 * cellWidth;
+    if (bottom<0)
+        bottom = 0;
 }
 
 bool Play::toolEnabled(Texture::Kind kind) const
@@ -410,6 +435,14 @@ void Play::drawToolbar()
         char buf[8];
         sprintf (buf, "%d", nRunnerBombs);
         bitmapText()->draw(bombBarLeft+0.15, bombBarBottom-0.05, 0.07, COLOR_YELLOW, buf);
+    }
+    if (nRunnerGrenades)
+    {
+        cellDraw.draw(Texture::GRENADE,  grenadeBarLeft, grenadeBarBottom, 1.0/8);
+        char buf[8];
+        sprintf (buf, "%d", nRunnerGrenades);
+        bitmapText()->draw(grenadeBarLeft+0.15, grenadeBarBottom-0.05, 0.07, COLOR_YELLOW, buf);
+
     }
 
 }
@@ -675,7 +708,7 @@ void Play::doExplosion(float bx, float by, std::list<Bomb*>* explosedBombs)
                 {
                     if (cell(j,i)->breakable())
                     {
-                        Texture::Kind cellKind = (Texture::Kind) cell(j, i)->kind();
+                        Texture::Kind cellKind = (Texture::Kind) cell(j, i)->_kind;
                         switch (cellKind)
                         {
                         case Texture::BIG_BRICK:
@@ -691,7 +724,7 @@ void Play::doExplosion(float bx, float by, std::list<Bomb*>* explosedBombs)
                             cell(j,i)->setKind(Texture::EMPTY);
                         }
                     }
-                    else if (cell(j,i)->kind() == Texture::BOMB)
+                    else if (cell(j,i)->kind() == Texture::BOMB || cell(j,i)->kind() == Texture::GRENADE)
                     {
                         Bomb* b = new Bomb(view, this, view->textures[Texture::BURNING_BOMB]);
                         b->setX(j);
@@ -709,11 +742,22 @@ void Play::doExplosion(float bx, float by, std::list<Bomb*>* explosedBombs)
         for (; bit != blocks.end(); bit++)
         {
             Block* block = *bit;
-            if (!block->bombed())
-                continue;
+            if (block->bombed())
             if (dist2(bx, by, block->x ,block->y) <=explosionRadius2)
             {
                 fireBombBlock(block);
+                blockFired = true;
+                break;
+            }
+            if (block->lifted())
+            if (dist2(bx, by, block->x ,block->y) <=explosionRadius2)
+            {
+                Lift* lift = new Lift(this);
+                lift->setX(block->x);
+                lift->setY(block->y);
+                lifts.push_back(lift);
+                bit = blocks.erase((bit));
+                delete block;
                 blockFired = true;
                 break;
             }

@@ -13,6 +13,7 @@ public:
     virtual void  moveStep(float delta);
     bool climbing;
     void catchBonus();
+    void catchBonus1();
     void doStop();
     void stop();
     void revive();
@@ -39,6 +40,8 @@ public:
     Block *leftBlock, *topBlock , *rightBlock, *bottomBlock, *inBlock;
     void calcNearBlocks();
     void clearNearBlocks();
+    virtual bool checkFall(float delta);
+
 
 };
 

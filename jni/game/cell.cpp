@@ -36,6 +36,8 @@ bool Cell::free() const
     case Texture::PLACE:
     case Texture::OPEN_DOOR:
     case Texture::BULLET_PROOF:
+    case Texture::GRENADE:
+
         return true;
     default:
         return false;

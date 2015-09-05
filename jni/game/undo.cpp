@@ -79,10 +79,11 @@ void Undo::save()
     st.runner = Coords(field->runner->x, field->runner->y);
     st.nRunnerBombs = field->nRunnerBombs;
     st.nRunnerKeys = field->nRunnerKeys;
+    st.nRunnerGrenades = field->nRunnerGrenades;
     st.armored = field->runner->armored;
     for (int  i = 0; i< field->nrows; i++)
         for (int j =0; j< field->ncols; j++)
-            st.cells[j+i*field->ncols] = field->cells[j+i*field->ncols]->kind();
+            st.cells[j+i*field->ncols] = field->cells[j+i*field->ncols]->_kind;
 //    for (std::list<Bomb*> ::iterator bit = field->bombs.begin(); bit != field->bombs.end(); bit++)
 //        st.bombs.push_back(new Bomb(**bit));
     std::list<Coords>::iterator cit = st.blocks.begin();
@@ -141,6 +142,7 @@ void Undo::restore()
     field->runner->climbing = false;
 
     field->nRunnerBombs = st.nRunnerBombs;
+    field->nRunnerGrenades = st.nRunnerGrenades;
     field->nRunnerKeys = st.nRunnerKeys;
     ind = (ind+size-1) % size;
     std::list<int>::iterator it = st.liftY.begin();

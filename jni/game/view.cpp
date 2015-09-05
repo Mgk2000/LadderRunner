@@ -38,7 +38,10 @@ void View::resizeGL(int w, int h)
     height = h;
     glViewport(0, 0, w, h);
     aspect = w * 1.0 / h;
+    LOGD ("w=%d h =%d aspect=%f", w, h, aspect);
     projection1.setToIdentity();
+    aspect = 1.6667;
+    //aspect = aspect* 0.9;
     //ortho
     projection1.m[0][0] = 1.0 / aspect;
     projection1.m[2][2] = -1.0;

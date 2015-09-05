@@ -81,6 +81,7 @@ public:
     bool insideField(float x, float y) const;
     bool insideField( int x, int y) const;
     void closeDialog();
+    int topY;
 };
 
 

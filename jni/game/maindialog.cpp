@@ -43,6 +43,7 @@ void MainDialog::draw()
     bitmapText()->drawCenter(0, selectLevelBottom,0.06, COLOR_YELLOW, "or select level:");
     //roundedRectangle()->drawFramed(levelRect,0.02, COLOR_BLUE, COLOR_BLACK);
     sprintf(buf,"%d", currLevel);
+ //   sprintf(buf,"%f", view->aspect);
     bitmapText()->drawCenter(0,
                        levelMinusButton.bottom+0.1, 0.1, COLOR_YELLOW, buf);
 

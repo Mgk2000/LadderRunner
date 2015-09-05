@@ -45,6 +45,8 @@ public:
     void showLadderHints();
     void hideLadderHints();
     int nRunnerKeys;
+    int nRunnerGrenades;
+    int grenadePutX, grenadePutY;
     void openDoor();
     bool levelDone;
     void doLevelDone();
@@ -52,6 +54,7 @@ public:
     void  drawYouDead();
     std::list <Bomb*> bombs;
     float bombBarLeft, bombBarBottom, bombBarWidth;
+    float grenadeBarLeft, grenadeBarBottom, grenadeBarWidth;
     virtual bool toolbarPressed(float x, float y) const;
     void processToolbarPress(float x, float y);
     float explosionRadius, explosionRadius2;

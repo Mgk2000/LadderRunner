@@ -87,6 +87,44 @@ void Runner::moveStep(float delta)
         doStop();
 }
 
+void Runner::catchBonus1()
+{
+    int ix = round(x);
+    int iy = round(y);
+    switch (this->field->cell(ix,iy)->kind())
+    {
+    case Texture::GOLDEN_KEY:
+        field->nRunnerKeys++;
+        field->cell(ix,iy)->setKind(Texture::EMPTY);
+        if (field->nLevelKeys == field->nRunnerKeys)
+            field->openDoor();
+        break;
+    case Texture::GRENADE:
+        if (fabs(x- int(x)) < 0.2 && fabs(y- int(y)) < 0.2)
+        if (ix!= field->grenadePutX || iy!= field->grenadePutY)
+        {
+            field->nRunnerGrenades++;
+            field->cell(ix,iy)->setKind(Texture::EMPTY);
+        }
+        break;
+    case Texture::BOMB:
+        field->nRunnerBombs++;
+        field->cell(ix,iy)->setKind(Texture::EMPTY);
+        break;
+    case Texture::OPEN_DOOR:
+        if (fabs(x- int(x)) < 0.2 && fabs(y- int(y)) < 0.2)
+            field->doLevelDone();
+        break;
+    case Texture::BULLET_PROOF:
+        armored = true;
+        field->cell(ix,iy)->setKind(Texture::EMPTY);
+        break;
+    default:
+        field->grenadePutX = -1000;
+        break;
+    }
+}
+
 void Runner::catchBonus()
 {
     switch (this->field->cell(x,y)->kind())
@@ -96,6 +134,14 @@ void Runner::catchBonus()
         field->cell(x,y)->setKind(Texture::EMPTY);
         if (field->nLevelKeys == field->nRunnerKeys)
             field->openDoor();
+        break;
+    case Texture::GRENADE:
+        if (climbing || (fabs(x- int(x)) < 0.2 && fabs(y- int(y)) < 0.2))
+        if (round(x)!= field->grenadePutX || round(y)!= field->grenadePutY)
+        {
+            field->nRunnerGrenades++;
+            field->cell(x,y)->setKind(Texture::EMPTY);
+        }
         break;
     case Texture::BOMB:
         field->nRunnerBombs++;
@@ -110,8 +156,10 @@ void Runner::catchBonus()
         field->cell(x,y)->setKind(Texture::EMPTY);
         break;
     default:
+        field->grenadePutX = -1000;
         break;
     }
+    //catchBonus1();
 }
 
 void Runner::doStop()
@@ -171,7 +219,7 @@ void Runner::moveRight()
 
 void Runner::tryMoveLeft(float delta)
 {
-    Block* block, *nextblock;
+    Block* block; //, *nextblock;
     float nextx = x + vx * delta;
     int ix = nextx;
     float dx = nextx - ix;
@@ -339,6 +387,13 @@ void Runner::clearNearBlocks()
     topBlock = 0;
     rightBlock = 0;
     bottomBlock = 0;
+
+}
+
+bool Runner::checkFall(float delta)
+{
+    catchBonus();
+    MovingObject::checkFall(delta);
 
 }
 

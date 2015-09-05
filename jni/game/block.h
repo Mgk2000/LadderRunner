@@ -15,6 +15,8 @@ public:
     Block* blockAbove() const;
     Lift * liftUnder() const;
     virtual bool bombed() const {return false;}
+    virtual bool lifted() const {return false;}
+
 };
 
 #endif // BLOCK_H

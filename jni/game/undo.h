@@ -18,7 +18,7 @@ struct State
     unsigned char* cells;
     std::list<Coords> blocks;
     Coords runner;
-    int nRunnerBombs, nRunnerKeys;
+    int nRunnerBombs, nRunnerKeys, nRunnerGrenades;
     void clear();
     bool armored;
     std::list<int> liftY;

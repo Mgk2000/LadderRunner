@@ -82,10 +82,12 @@ void Constructor::fillTools()
     tools.push_back(new ToolButton(Texture::BLOCK));
     tools.push_back(new ToolButton(Texture::BOMB));
     tools.push_back(new ToolButton(Texture::BOMB_BLOCK));
+    tools.push_back(new ToolButton(Texture::GRENADE));
     tools.push_back(new ToolButton(Texture::GOLDEN_KEY));
     tools.push_back(new ToolButton(Texture::DOOR));
     tools.push_back(new ToolButton(Texture::BULLET_PROOF));
     tools.push_back(new ToolButton(Texture::LIFT));
+    tools.push_back(new ToolButton(Texture::LIFT_BLOCK));
 
 //    tools.push_back(new ToolButton(Texture::MOVE));
     tools.push_back(new ToolButton(Texture::EXPAND_HOR));

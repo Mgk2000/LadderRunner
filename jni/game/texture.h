@@ -51,6 +51,8 @@ public:
         BULLET_PROOF,
         LIFT,
         BOMB_BLOCK,
+        GRENADE,
+        LIFT_BLOCK,
         MORE,
         LESS,
         EXIT,

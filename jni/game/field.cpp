@@ -10,6 +10,7 @@
 #include "points.h"
 #include "block.h"
 #include "bombblock.h"
+#include "liftblock.h"
 #include "lift.h"
 Field::Field(View *_view) : view(_view), nlevels(0), cellWidth(1.6667 /8),
     left(0), bottom(0), scale(1.0), cellDraw(_view), runnerDraw(_view), nToolColumns(1),
@@ -67,6 +68,7 @@ void Field::openLevel(int l, const char *levelBuf)
     memcpy (&nr, (void*)&levelBuf[2], 2);
     ncols = nc;
     nrows = nr;
+    topY = 0;
     cells = new Cell*[ncols * nrows];
     int dataOffset = 4;
     nLevelKeys=0;
@@ -76,6 +78,8 @@ void Field::openLevel(int l, const char *levelBuf)
         for (int j = 0; j< ncols; j++)
         {
             Texture::Kind kind = (Texture::Kind)levelBuf[dataOffset + j+ i* ncols];
+            if (i>topY && kind != Texture::EMPTY)
+                topY = i;
             if (kind == Texture::GOLDEN_KEY)
                 nLevelKeys ++;
             if (!playing || !canMove(kind))
@@ -105,8 +109,13 @@ void Field::openLevel(int l, const char *levelBuf)
                     BombBlock * block = new BombBlock((Play*)this, Texture::BOMB_BLOCK);
                     ((Play*)this)->blocks.push_back(block);
                     mo = block;
-                    //if (i==2)
-                     //   block->marked = true;
+                    break;
+                }
+                case Texture::LIFT_BLOCK:
+                {
+                    LiftBlock * block = new LiftBlock((Play*)this, Texture::LIFT_BLOCK);
+                    ((Play*)this)->blocks.push_back(block);
+                    mo = block;
                     break;
                 }
                 case Texture::LIFT:
@@ -180,6 +189,10 @@ void Field::drawField()
                 dy = -cellWidth*0.2;
                 break;
             case Texture::BOMB:
+                sc = 0.3;
+                dy = -cellWidth*0.6;
+                break;
+            case Texture::GRENADE:
                 sc = 0.3;
                 dy = -cellWidth*0.6;
                 break;
@@ -340,6 +353,7 @@ bool Field::canMove(Texture::Kind _kind) const
     case Texture::BLOCK:
     case Texture::BOMB_BLOCK:
     case Texture::LIFT:
+    case Texture::LIFT_BLOCK:
         return true;
     default:
         return false;
