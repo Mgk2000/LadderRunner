@@ -22,7 +22,7 @@ void Block::moveStep(float delta)
         else if (vx > 0)
             tryMoveRight(delta);
 //        catchBonus();
-        if (!field->hasSurface(round(x), y) && y>0)
+        if (y>0 && !field->isBrick((round(x)), y-1)  && !field->hasSurface(round(x), y) )
         {
             //Block* block = field->blockOfXY(x, y-1);
             Block* block = blockUnder();

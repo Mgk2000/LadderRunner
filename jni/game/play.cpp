@@ -1,4 +1,4 @@
-#include "play.h"
+﻿#include "play.h"
 #include "runner.h"
 #include "math.h"
 #include "logmsg.h"
@@ -16,15 +16,18 @@ Play::Play(View *_view) : Field(_view), ladder(_view, this)
 {
    // playing = true;
     fillTools();
-    bombBarLeft = 1.05;
+    bombBarLeft = 0.7;
     bombBarBottom = 0.9;
     bombBarWidth=0.1;
+    liftBarLeft = 1.05;
+    liftBarBottom = 0.9;
+    liftBarWidth=0.1;
     grenadeBarLeft = 1.4;
     grenadeBarBottom = 0.9;
     grenadeBarWidth=0.1;
-    explosionRadius = 3.9;
+    //explosionRadius = 3.9;
     grenadePutX = -1000;
-    explosionRadius2 = sqr(explosionRadius);
+    //explosionRadius2 = sqr(explosionRadius);
 }
 
 void Play::drawFrame()
@@ -75,6 +78,7 @@ void Play::openLevel(int l, const char *buf)
     firstStep = true;
     scale = 0.5;
     topY = topY+2;
+    showCurrLevelEndTime = currTime() + 2000;
 //    view->resizeGL(view->width, view->height);
 //    showMainDialog();
 }
@@ -124,13 +128,47 @@ void Play::processTouchPress(float x, float y)
        }
        else
        {
-           Bomb* bomb = new Bomb(view, this, view->textures[Texture::BURNING_BOMB]);
+           Bomb* bomb = new Bomb(view, this, view->textures[Texture::BURNING_BOMB], true);
            bomb->setX(runner->x);
            bomb->setY(runner->y);
            bombs.push_back(bomb);
            nRunnerBombs--;
        }
        return;
+   }
+   if (runner->nearLiftBlock() &&
+        (x>= liftBarLeft - liftBarWidth) &&
+        (x<= liftBarLeft + liftBarWidth) &&
+        (y>= liftBarBottom - liftBarWidth) &&
+        (y <= liftBarBottom + liftBarWidth))
+   {
+       if (runner->leftBlock && runner->leftBlock->lifted())
+       {
+           extractLift(runner->leftBlock);
+           runner->leftBlock = 0;
+       }
+       if (runner->topBlock && runner->topBlock->lifted())
+       {
+           extractLift(runner->topBlock);
+           runner->topBlock = 0;
+       }
+       if (runner->rightBlock && runner->rightBlock->lifted())
+       {
+           extractLift(runner->rightBlock);
+           runner->rightBlock = 0;
+       }
+       if (runner->bottomBlock && runner->bottomBlock->lifted())
+       {
+           extractLift(runner->bottomBlock);
+           runner->bottomBlock = 0;
+       }
+       if (runner->inBlock && runner->inBlock->lifted())
+       {
+           extractLift(runner->inBlock);
+           runner->inBlock = 0;
+       }
+       return;
+
    }
    if ((nRunnerGrenades>0) &&
         (x>= grenadeBarLeft - grenadeBarWidth) &&
@@ -234,7 +272,7 @@ bool Play::isLeftCorner(int x, int y) const
     Lift* lift = liftOfXY(x-1,y+1);
     if (lift)
         return false;
-    return isBrick(x,y) && !isBrick(x-1,y) && !isBrick(x-1, y+1) && !isBrick(x, y+1);
+    return (isBrick(x,y) || liftOfXY(x,y)!=0) && !isBrick(x-1,y) && !isBrick(x-1, y+1) && !isBrick(x, y+1);
 }
 
 bool Play::isRightCorner(int x, int y) const
@@ -247,7 +285,7 @@ bool Play::isRightCorner(int x, int y) const
     Lift* lift = liftOfXY(x+1,y+1);
     if (lift)
         return false;
-    return isBrick(x,y) && !isBrick(x+1,y) && !isBrick(x+1, y+1) && !isBrick(x, y+1);
+    return (isBrick(x,y) || liftOfXY(x,y)!=0)&& !isBrick(x+1,y) && !isBrick(x+1, y+1) && !isBrick(x, y+1);
 }
 
 
@@ -270,6 +308,8 @@ void Play::draw()
             }
     drawMoveables();
     drawToolbar();
+    if (playing && currTime() < showCurrLevelEndTime)
+        showCurrLevel();
 }
 
 void Play::drawMoveables()
@@ -361,7 +401,7 @@ void Play::moveStep()
         bomb->moveStep(delta);
         if (bomb->out())
         {
-            doExplosion(bomb->ix, bomb->iy, &explosedBombs);
+            doExplosion(bomb, &explosedBombs);
             delete bomb;
             bit = bombs.erase(bit);
         }
@@ -393,7 +433,9 @@ void Play::adjustScreenPosition()
 {
     if (!runner || runner->climbing)
         return;
-    if (runner->x < nScreenXCells/scale*0.5)
+    if (ncols <= nScreenXCells/scale)
+        left = (ncols-nScreenXCells /scale) *  cellWidth;
+    else if (runner->x < nScreenXCells/scale*0.5)
         left = 0;
     else if (runner->x > ncols - nScreenXCells /scale *0.5)
         left = (ncols-nScreenXCells /scale) * 2 * cellWidth;
@@ -436,6 +478,8 @@ void Play::drawToolbar()
         sprintf (buf, "%d", nRunnerBombs);
         bitmapText()->draw(bombBarLeft+0.15, bombBarBottom-0.05, 0.07, COLOR_YELLOW, buf);
     }
+    if (runner->nearLiftBlock())
+        cellDraw.draw(Texture::LIFT,  liftBarLeft, liftBarBottom, 1.0/8);
     if (nRunnerGrenades)
     {
         cellDraw.draw(Texture::GRENADE,  grenadeBarLeft, grenadeBarBottom, 1.0/8);
@@ -560,6 +604,8 @@ bool Play::canLadder(int x1, int y1, int x2, int y2) const
         }
         else
         {
+            if (x1 ==x2 && isBrick(x1, y2-1))
+                return false;
             if (x1 != x2)
                 dx = dx + 0.5;
             if (!isRightCorner(x2,y2-1) && cell(x2,y2)->kind() != Texture::OPEN_DOOR)
@@ -699,8 +745,12 @@ void Play::processToolbarPress(float x, float y)
     }
 }
 
-void Play::doExplosion(float bx, float by, std::list<Bomb*>* explosedBombs)
+void Play::doExplosion(Bomb* ebomb, std::list<Bomb*>* explosedBombs)
 {
+    float explosionRadius = ebomb->radius;
+    float explosionRadius2 = sqr(explosionRadius);
+    int bx = ebomb->ix;
+    int by =  ebomb->iy;
     for (int i = by - explosionRadius; i< by + explosionRadius; i++ )
         for (int j = bx - explosionRadius; j< bx + explosionRadius; j++ )
             if (i>=0 && i<nrows && j >=0 && j<ncols)
@@ -726,7 +776,7 @@ void Play::doExplosion(float bx, float by, std::list<Bomb*>* explosedBombs)
                     }
                     else if (cell(j,i)->kind() == Texture::BOMB || cell(j,i)->kind() == Texture::GRENADE)
                     {
-                        Bomb* b = new Bomb(view, this, view->textures[Texture::BURNING_BOMB]);
+                        Bomb* b = new Bomb(view, this, view->textures[Texture::BURNING_BOMB], cell(j,i)->kind() == Texture::BOMB);
                         b->setX(j);
                         b->setY(i);
                         explosedBombs->push_back(b);
@@ -790,19 +840,22 @@ void Play::showMainDialog()
 
 void Play::fireBombBlock(Block *block)
 {
-    Bomb* bomb = new Bomb(view, this, view->textures[Texture::BURNING_BOMB]);
+    Bomb* bomb = new Bomb(view, this, view->textures[Texture::BURNING_BOMB], true);
     bomb->setX(block->x);
     bomb->setY(block->y);
     bombs.push_back(bomb);
-    /*std::list<Block*>::iterator bit = blocks.begin();
-    for(; bit != blocks.end(); bit++)
-        if (*bit == block)
-        {
-            bit = blocks.erase(bit);
-            break;
-        }
-    delete block;*/
     block->setX(1000);
+}
+
+void Play::extractLift(Block *block)
+{
+    undo.save();
+    Lift* lift = new Lift(this);
+    lift->setX(block->x);
+    lift->setY(block->y);
+    lifts.push_back(lift);
+    block->setX(1000);
+
 }
 
 void Play::clearLevel()
@@ -931,3 +984,11 @@ Lift *Play::liftOfXY(int x, int y) const
     return 0;
 
 }
+void Play::showCurrLevel() const
+{
+    char buf[32];
+    sprintf (buf, "Level %d", this->level);
+    bitmapText()->drawCenter(0, 0, 0.1, COLOR_YELLOW, buf );
+    LOGD("drawCurrLevel %d", level);
+}
+

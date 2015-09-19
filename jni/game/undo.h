@@ -2,6 +2,7 @@
 #define UNDO_H
 #include <list>
 class Block;
+class Lift;
 class Bomb;
 class Play;
 class Runner;
@@ -16,12 +17,12 @@ struct State
 {
     State();
     unsigned char* cells;
-    std::list<Coords> blocks;
+    std::list<Block*> blocks;
     Coords runner;
     int nRunnerBombs, nRunnerKeys, nRunnerGrenades;
     void clear();
     bool armored;
-    std::list<int> liftY;
+    std::list<Lift*> lifts;
 };
 
 class Undo
@@ -36,6 +37,12 @@ public:
     void clear();
     void clearField();
     void save();
+    void copyLifts(std::list<Lift*> *dst, std::list<Lift*> *src);
+    void copyBlocks(std::list<Block*> *dst, std::list<Block*> *src);
+    void saveBlocks();
+    void saveLifts();
+    void restoreBlocks();
+    void restoreLifts();
     void restore();
     Play* field;
 };

@@ -15,6 +15,7 @@ public:
     bool runnerWaiting();
     void moveToRunner();
     void moveStep(float delta);
+    void doStop();
 };
 
 #endif // LIFT_H

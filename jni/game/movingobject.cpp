@@ -107,7 +107,7 @@ bool MovingObject::checkFall(float delta)
 {
     float nexty = y + vy* delta;
     int iy = y;
-    if (iy<0)
+    if (iy<0 || nexty <0)
     {
         y = 0;
         doStop();

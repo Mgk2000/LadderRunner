@@ -4,6 +4,8 @@
 #include "runner.h"
 #include "bomb.h"
 #include "block.h"
+#include "bombblock.h"
+#include "liftblock.h"
 #include "logmsg.h"
 #include "growingcell.h"
 #include "lift.h"
@@ -25,7 +27,7 @@ void State::clear()
 }
 
 
-Undo::Undo() :  size(4)
+Undo::Undo() :  size(100)
 {
     states = new State*[size];
     for (int i =0; i< size; i++)
@@ -41,17 +43,9 @@ void Undo::init(Play *_field)
 
     clear();
     field = _field;
-    for (int i =0; i< size; i++)
-    {
-        State& st = *(states[i]);
-        st.cells = new unsigned char[field->nrows * field->ncols];
-        st.blocks.clear();
-        for (int i=0; i< field->blocks.size(); i++)
-        {
-            Coords c;
-            st.blocks.push_back(c);
-        }
-    }
+
+    for (int i = 0; i< size; i++)
+        states[i]->cells = new unsigned char [field->nrows * field->ncols];
     ind =0;
     len = 0;
 }
@@ -86,26 +80,74 @@ void Undo::save()
             st.cells[j+i*field->ncols] = field->cells[j+i*field->ncols]->_kind;
 //    for (std::list<Bomb*> ::iterator bit = field->bombs.begin(); bit != field->bombs.end(); bit++)
 //        st.bombs.push_back(new Bomb(**bit));
-    std::list<Coords>::iterator cit = st.blocks.begin();
-    for (std::list<Block*> ::iterator bit = field->blocks.begin(); bit != field->blocks.end(); bit++, cit++)
+    saveBlocks();
+    saveLifts();
+}
+
+void Undo::copyLifts(std::list<Lift *> *dst, std::list<Lift *> *src)
+{
+    for (std::list<Lift*>::iterator lit = dst->begin(); lit!= dst->end(); lit++)
+        delete *lit;
+    dst->clear();
+    for (std::list<Lift*>::iterator lit = src->begin(); lit!= src->end(); lit++)
     {
-        Block* block = *bit;
-        Coords &c = *cit;
-        c.x = block->x;
-        c.y = block->y;
-    }
-    st.liftY.clear();
-    for (std::list<Lift*>::iterator lit = field->lifts.begin(); lit!= field->lifts.end(); lit++)
-    {
-        Lift* lift = *lit;
-        st.liftY.push_back(lift->y);
+        Lift* lift = new Lift(**lit);
+        dst->push_back(lift);
     }
 }
+
+void Undo::copyBlocks(std::list<Block *> *dst, std::list<Block *> *src)
+{
+    for (std::list<Block*>::iterator lit = dst->begin(); lit!= dst->end(); lit++)
+        delete *lit;
+    dst->clear();
+    for (std::list<Block*>::iterator lit = src->begin(); lit!= src->end(); lit++)
+    {
+        Block* block = *lit;
+        Block* newBlock;
+        if (block->bombed())
+            newBlock = new BombBlock(*((BombBlock*)block));
+        else if (block->lifted())
+            newBlock = new LiftBlock (*((LiftBlock*)block));
+        else
+            newBlock = new Block(*block);
+        dst->push_back(newBlock);
+    }
+
+}
+
+void Undo::saveBlocks()
+{
+    State& st = *states[ind];
+    copyBlocks(&st.blocks, &field->blocks);
+}
+
+void Undo::saveLifts()
+{
+    State& st = *states[ind];
+    copyLifts(&st.lifts, &field->lifts);
+}
+
+void Undo::restoreBlocks()
+{
+    State& st = *states[ind];
+    copyBlocks(&field->blocks ,&st.blocks);
+    for (std::list<Block*>::iterator bit = field->blocks.begin(); bit != field->blocks.end(); bit++)
+        (*bit)->doStop();
+}
+
+void Undo::restoreLifts()
+{
+    State& st = *states[ind];
+    copyLifts(&field->lifts ,&st.lifts);
+}
+
 
 void Undo::restore()
 {
     if (len<=0)
         return;
+    field->levelDone = false;
     field->runner->revive();
     len--;
 //    LOGD("Restore ind=%d", ind);
@@ -125,14 +167,8 @@ void Undo::restore()
                 field->cells[ind] = new Cell((Texture::Kind)k);
             }
         }
-    std::list<Coords>::iterator cit = st.blocks.begin();
-    for (std::list<Block*> ::iterator bit = field->blocks.begin(); bit != field->blocks.end(); bit++, cit++)
-    {
-        Block * block = *bit;
-        Coords c = *cit;
-        block->setX(c.x);
-        block->setY(c.y);
-    }
+    restoreLifts();
+    restoreBlocks();
     field->runner->armored = st.armored;
     field->clearBombs();
     field->runner->setX(st.runner.x);
@@ -144,13 +180,10 @@ void Undo::restore()
     field->nRunnerBombs = st.nRunnerBombs;
     field->nRunnerGrenades = st.nRunnerGrenades;
     field->nRunnerKeys = st.nRunnerKeys;
+    field->runner->calcNearBlocks();
     ind = (ind+size-1) % size;
-    std::list<int>::iterator it = st.liftY.begin();
-    for (std::list<Lift*>::iterator lit = field->lifts.begin(); lit!= field->lifts.end(); lit++, it++)
-    {
-        Lift* lift = *lit;
-        lift->y = *it;
-    }
 }
+
+
 
 

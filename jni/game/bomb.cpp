@@ -3,13 +3,22 @@
 #include "play.h"
 #include "view.h"
 
-Bomb::Bomb(View* _view, Play* _field, Texture* _texture) : DrawingObject (_view ,1 , _texture),
-     field(_field), phase(0)
+Bomb::Bomb(View* _view, Play* _field, Texture* _texture, bool _big) : DrawingObject (_view ,1 , _texture),
+     field(_field), phase(0), big(_big)
 {
-    this->setScale(0.05);
     initGL();
     beginTime = field->currTime();
     endTime = beginTime + 3000;
+    if (!big)
+    {
+        radius = 2.2;
+        this->setScale(0.035);
+    }
+    else
+    {
+        radius = 3.9;
+        this->setScale(0.05);
+    }
 }
 
 void Bomb::draw()

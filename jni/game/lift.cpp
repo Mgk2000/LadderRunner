@@ -3,6 +3,7 @@
 #include "runner.h"
 #include <math.h>
 #include "block.h"
+#include "logmsg.h"
 
 Lift::Lift(Play* _field) : MovingObject(_field, Texture::LIFT), block(0)
 {
@@ -60,7 +61,8 @@ bool Lift::runnerWaiting()
 
 void Lift::moveToRunner()
 {
-    if (abs(y-runner()->y) < 0.1)
+    float dy = fabs(y-runner()->y);
+    if (dy < 0.2 && dy > 0.001)
     {
         y = runner()->y;
         //vy = 0;
@@ -104,11 +106,30 @@ void Lift::moveStep(float delta)
         {
             if (!upblock)
                 break;
-            upblock->setX(x);
+            //upblock->setX(x);
             upblock->setY(y+i);
             upblock->setVX(0);
             upblock->setVY(vy);
             upblock  = upblock->blockAbove();
         }
     }
+}
+
+void Lift::doStop()
+{
+    MovingObject::doStop();
+    int i = 0;
+    std::list<Block*> blocks;
+    for (Block* upblock = block ;;i++)
+    {
+        if (!upblock)
+            break;
+        upblock->setX(x);
+        upblock->setY(y+i);
+        upblock->setVX(0);
+        upblock->setVY(0);
+        blocks.push_back(upblock);
+        upblock  = upblock->blockAbove();
+    }
+    LOGD("upblocks=%d", blocks.size());
 }

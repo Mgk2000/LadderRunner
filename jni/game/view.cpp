@@ -1,4 +1,4 @@
-#include "view.h"
+﻿#include "view.h"
 #include "constructor.h"
 #include "play.h"
 #include "logmsg.h"
@@ -117,6 +117,7 @@ int View::drawFrame()
     else
         field->drawFrame();
     return maxSound;
+
 }
 
 void View::newLevel(int l)
@@ -330,3 +331,4 @@ void View::selectExitGame()
 {
     maxSound = -1;
 }
+

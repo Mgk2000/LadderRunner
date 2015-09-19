@@ -1,4 +1,4 @@
-#ifndef PLAY_H
+﻿#ifndef PLAY_H
 #define PLAY_H
 #include "field.h"
 #include "ladder.h"
@@ -7,6 +7,7 @@ class Bomb;
 class Explosion;
 class Block;
 class Lift;
+class Grenade;
 
 class Play : public Field
 {
@@ -54,11 +55,12 @@ public:
     void  drawYouDead();
     std::list <Bomb*> bombs;
     float bombBarLeft, bombBarBottom, bombBarWidth;
+    float liftBarLeft, liftBarBottom, liftBarWidth;
     float grenadeBarLeft, grenadeBarBottom, grenadeBarWidth;
     virtual bool toolbarPressed(float x, float y) const;
     void processToolbarPress(float x, float y);
-    float explosionRadius, explosionRadius2;
-    void doExplosion(float bx, float by, std::list<Bomb*>* explosedBombs);
+//    float explosionRadius, explosionRadius2;
+    void doExplosion(Bomb* ebomb, std::list<Bomb*>* explosedBombs);
     std::list <Explosion*> explosions;
     void clearLevel();
     std::list<Block*> blocks;
@@ -73,6 +75,10 @@ public:
     bool pressNearLeft, pressNearRight;
     bool firstStep;
     void fireBombBlock(Block* block);
+    void extractLift(Block* block);
+    void showCurrLevel() const;
+    long long showCurrLevelEndTime;
+
 };
 
 #endif // PLAY_H

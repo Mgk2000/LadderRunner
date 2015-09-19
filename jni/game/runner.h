@@ -37,6 +37,7 @@ public:
     bool onBlockLift() const;
     bool strongClimbing() const;
     bool nearBombBlock() const;
+    bool nearLiftBlock() const;
     Block *leftBlock, *topBlock , *rightBlock, *bottomBlock, *inBlock;
     void calcNearBlocks();
     void clearNearBlocks();

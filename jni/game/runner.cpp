@@ -18,6 +18,8 @@ Runner::Runner(Play* _field) : MovingObject(_field, Texture::RUNNER),
 void Runner::climb(int _x, int _y)
 {
     climbX = _x;
+    if (_y>0 && field->liftOfXY(_x, _y-1) !=0 && field->blockOfXY(_x, _y-1) ==0)
+        _y = _y-1;
     climbY = _y;
     double fi = atan2(_x - x, _y-y);
     vx = v* sin(fi);
@@ -43,6 +45,7 @@ void Runner::checkClimb()
         y = climbY;
         vx = postVX;
         vy = 0;
+        catchBonus();
         if (vx ==0)
             doStop();
     }
@@ -85,6 +88,8 @@ void Runner::moveStep(float delta)
     }
     if (stopping)
         doStop();
+    if (fabs(x-field->grenadePutX)>0.3 || fabs(y-field->grenadePutY)>0.3)
+        field->grenadePutX = 1000;
 }
 
 void Runner::catchBonus1()
@@ -136,7 +141,7 @@ void Runner::catchBonus()
             field->openDoor();
         break;
     case Texture::GRENADE:
-        if (climbing || (fabs(x- int(x)) < 0.2 && fabs(y- int(y)) < 0.2))
+        if (/*climbing ||*/ (fabs(x- int(x)) < 0.2 && fabs(y- int(y)) < 0.2))
         if (round(x)!= field->grenadePutX || round(y)!= field->grenadePutY)
         {
             field->nRunnerGrenades++;
@@ -166,6 +171,7 @@ void Runner::doStop()
 {
     MovingObject::doStop();
     climbing = false;
+    catchBonus();
     vx = postVX;
 }
 
@@ -410,4 +416,18 @@ bool Runner::nearBombBlock() const
     if (bottomBlock && bottomBlock->bombed())
         return true;
 
+}
+
+bool Runner::nearLiftBlock() const
+{
+    if (inBlock && inBlock->lifted())
+        return true;
+    if (leftBlock && leftBlock->lifted())
+        return true;
+    if (topBlock && topBlock->lifted())
+        return true;
+    if (rightBlock && rightBlock->lifted())
+        return true;
+    if (bottomBlock && bottomBlock->lifted())
+        return true;
 }

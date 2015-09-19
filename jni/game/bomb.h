@@ -8,7 +8,7 @@ class Play;
 class Bomb : public DrawingObject
 {
 public:
-    Bomb(View* _view, Play* _field, Texture* _texture);
+    Bomb(View* _view, Play* _field, Texture* _texture, bool _big);
     void draw();
     void initGL();
     void moveStep(float delta);
@@ -19,6 +19,8 @@ public:
     void setX(int _ix) {ix = _ix;}
     void setY(int _iy) {iy = _iy;}
     bool out() const;
+    float radius;
+    bool big;
 };
 
 #endif // BOMB_H
